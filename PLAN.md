@@ -97,6 +97,7 @@ Notes:
 ### To evaluate later
 - Night mode (e.g. dimmer, red/amber digits at night, based on the RTC time).
 - **Individual preset icons:** each preset gets its own program icon (plate, cup, popcorn, butter, chocolate) instead of the shared cloche. The user will supply a popcorn icon example; draw the others in the same line style (34×30 px, `makeProgIcon` in `ui.cpp`).
+- **Easter eggs:** the user wants a few hidden surprises; what they are is not decided yet. A later phase. They must never change how the oven heats, never get in the way of normal use, and never start anything without a deliberate action.
 
 ## Features (prioritised)
 
