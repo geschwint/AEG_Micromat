@@ -1,0 +1,9 @@
+# Build output (arduino-cli --output-dir / --export-binaries)
+build/
+*.bin
+*.elf
+*.map
+
+# IDE workspace state
+.theia/
+.vscode/
