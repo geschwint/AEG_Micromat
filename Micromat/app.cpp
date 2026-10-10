@@ -3,6 +3,7 @@
 #include "programs.h"
 #include "settings.h"
 #include "touch_cst816.h"
+#include "fw_update.h"
 #include "wifi_creds.h"
 #include "wifi_setup.h"
 #include <lvgl.h>  // LV_SYMBOL_OK only
@@ -13,7 +14,7 @@ static constexpr uint32_t TURN_TOAST_MS = 8000;
 // Rows of the fixed menus; each submenu's parent row index must match these.
 static const Str ROOT_ROWS[] = { Str::Defrost, Str::Programs, Str::Settings };
 static const Str SETTINGS_ROWS[] = { Str::Clock, Str::Brightness, Str::DimLevel, Str::DimDelay, Str::Sound,
-                                     Str::Language, Str::Wifi };
+                                     Str::Language, Str::Wifi, Str::FirmwareUpdate };
 static const Str CLOCK_ROWS[] = { Str::SetTime, Str::AutoTime };
 static const Str SOUND_ROWS[] = { Str::KeyClicks, Str::Volume };
 static const Str WIFI_ROWS[] = { Str::Wifi, Str::Network, Str::ForgetNetwork };
@@ -402,6 +403,10 @@ void App::menuSelect() {
     }
     case MenuId::Settings: {
       Str row = SETTINGS_ROWS[i];
+      if (row == Str::FirmwareUpdate) {
+        startUpdate();
+        break;
+      }
       MenuId sub = row == Str::Clock        ? MenuId::Clock
                  : row == Str::Brightness   ? MenuId::Brightness
                  : row == Str::DimLevel     ? MenuId::DimLevel
@@ -459,6 +464,38 @@ void App::leaveWifiSetup() {
   wifiSetup.stop();
   openMenu(MenuId::Wifi, 1);
   if (saved) wifi_->syncNow();
+}
+
+// --- Firmware update screen ------------------------------------------------------------------
+// Only from Idle/Done (a paused cook must be cleared first). While the screen
+// is open nothing starts cooking: Quick start and push are not passed on.
+void App::startUpdate() {
+  OvenState st = oven_->state();
+  if (st == OvenState::Cooking || st == OvenState::Paused) {
+    buzzer_->error();
+    showToast(Str::NotWhileCooking);
+    return;
+  }
+  wifi_->cancel();  // the update needs the radio
+  firmwareUpdate.start();
+  screen_ = Screen::Update;
+  buzzer_->click();
+}
+
+void App::leaveUpdate() {
+  firmwareUpdate.stop();
+  openMenu(MenuId::Settings, count(SETTINGS_ROWS) - 1);
+}
+
+void App::updateInput(InputEvent e) {
+  if (firmwareUpdate.state() == FirmwareUpdate::State::Done) return;  // restarting
+  switch (e) {
+    case InputEvent::Stop:
+    case InputEvent::Program:
+    case InputEvent::EncoderPush: leaveUpdate(); break;
+    case InputEvent::QuickStart:  buzzer_->error(); break;
+    default: break;
+  }
 }
 
 void App::wifiSetupInput(InputEvent e) {
@@ -560,6 +597,10 @@ void App::onInput(InputEvent e, int32_t value) {
     Serial.printf("[%7lu] service screen\n", millis());
     buzzer_->click();
     if (screen_ == Screen::WifiSetup) wifiSetup.stop();
+    if (screen_ == Screen::Update) {
+      if (firmwareUpdate.state() == FirmwareUpdate::State::Done) return;  // restarting
+      firmwareUpdate.stop();
+    }
     screen_ = Screen::Service;
     return;
   }
@@ -570,6 +611,7 @@ void App::onInput(InputEvent e, int32_t value) {
     case Screen::Edit:    editInput(e, value); break;
     case Screen::Service: serviceInput(e); break;
     case Screen::WifiSetup: wifiSetupInput(e); break;
+    case Screen::Update:    updateInput(e); break;
   }
 }
 
@@ -647,6 +689,8 @@ void App::onTouch(int16_t x, int16_t y) {
     }
   } else if (screen_ == Screen::WifiSetup) {
     if (y < MENU_ROW_Y0) leaveWifiSetup();
+  } else if (screen_ == Screen::Update) {
+    if (y < MENU_ROW_Y0 && firmwareUpdate.state() != FirmwareUpdate::State::Done) leaveUpdate();
   } else if (screen_ == Screen::Service && door_->simulated()) {
     door_->simulate(!door_->closed());
   }
@@ -706,6 +750,10 @@ void App::update(uint32_t now) {
   // then shows the result until the usual menu timeout.
   if (screen_ == Screen::WifiSetup && !wifiSetup.active() && t - lastUse_ > MENU_TIMEOUT_MS) {
     leaveWifiSetup();
+    closeMenu();
+  }
+  if (screen_ == Screen::Update && !firmwareUpdate.active() && t - lastUse_ > MENU_TIMEOUT_MS) {
+    leaveUpdate();
     closeMenu();
   }
 

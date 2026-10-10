@@ -13,7 +13,9 @@
 // weight, clock time) take a value with the encoder; push confirms.
 // A program from the menu is loaded (time, power, rotate) and the main screen
 // returns; push or Quick start then starts it, as for a manual setting.
-// Settings -> Wi-Fi -> Network opens the Wi-Fi setup screen (wifi_setup.h).
+// Settings -> Wi-Fi -> Network opens the Wi-Fi setup screen (wifi_setup.h);
+// Settings -> Firmware update the update screen (fw_update.h; only when idle,
+// and nothing can start cooking while it's open).
 #pragma once
 #include <Arduino.h>
 #include "inputs.h"
@@ -24,7 +26,7 @@
 #include "wifi_time.h"
 #include "ui_text.h"
 
-enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup };
+enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup, Update };
 // Choice lists come last (isChoice() relies on that order).
 enum class MenuId : uint8_t {
   Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi,
@@ -89,6 +91,9 @@ private:
   void startWifiSetup();
   void leaveWifiSetup();
   void wifiSetupInput(InputEvent e);
+  void startUpdate();
+  void leaveUpdate();
+  void updateInput(InputEvent e);
   void onTouch(int16_t x, int16_t y);
 
   Oven *oven_ = nullptr;

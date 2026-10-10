@@ -74,6 +74,23 @@ static const char *const ENGLISH[] = {
   "Testing the connection...",                  // PageTesting
   "Connected! The network is saved. You can close this page.",  // PageOk
   "Try again",                                  // PageTryAgain
+  "Firmware update",                            // FirmwareUpdate
+  "Not while cooking",                          // NotWhileCooking
+  "Open the address and enter the password",    // UpdateSignIn
+  "On your network: %s",                        // UpdateHome
+  "Receiving... %u %%",                         // UpdateReceiving
+  "Installed, restarting...",                   // UpdateDone
+  "Update failed: %s",                          // UpdateFailed
+  "Closed (no activity)",                       // UpdateClosed
+  "Running version",                            // PageVersion
+  "Firmware file (.bin)",                       // PageFile
+  "Install",                                    // PageInstall
+  "Takes about 30 s. Keep this page open; the oven restarts when done.",  // PageUpdateNote
+  "Installed. The oven restarts now.",          // PageUpdateOk
+  "Update failed:",                             // PageUpdateFailed
+  "Sign in",                                    // PageSignIn
+  "Wrong password",                             // PageWrongPassword
+  "If no file picker opens here, open http://192.168.4.1 in your normal browser (Chrome, Safari).",  // PageBrowserHint
 };
 
 static const char *const SWEDISH[] = {
@@ -149,6 +166,23 @@ static const char *const SWEDISH[] = {
   "Testar anslutningen...",                     // PageTesting
   "Ansluten! Nätverket är sparat. Du kan stänga sidan.",  // PageOk
   "Försök igen",                                // PageTryAgain
+  "Uppdatera programvara",                      // FirmwareUpdate
+  "Inte under tillagning",                      // NotWhileCooking
+  "Öppna adressen och ange lösenordet",          // UpdateSignIn
+  "På ditt nätverk: %s",                        // UpdateHome
+  "Tar emot... %u %%",                          // UpdateReceiving
+  "Installerad, startar om...",                 // UpdateDone
+  "Uppdateringen misslyckades: %s",             // UpdateFailed
+  "Stängd (ingen aktivitet)",                   // UpdateClosed
+  "Version som körs",                           // PageVersion
+  "Programfil (.bin)",                          // PageFile
+  "Installera",                                 // PageInstall
+  "Tar ca 30 s. Håll sidan öppen; ugnen startar om när den är klar.",  // PageUpdateNote
+  "Installerad. Ugnen startar om nu.",          // PageUpdateOk
+  "Uppdateringen misslyckades:",                // PageUpdateFailed
+  "Logga in",                                   // PageSignIn
+  "Fel lösenord",                               // PageWrongPassword
+  "Öppnas ingen filväljare här: öppna http://192.168.4.1 i din vanliga webbläsare (Chrome, Safari).",  // PageBrowserHint
 };
 
 static_assert(sizeof(ENGLISH) / sizeof(ENGLISH[0]) == (size_t)Str::Count, "ENGLISH table must match Str");

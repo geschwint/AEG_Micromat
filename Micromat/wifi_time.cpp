@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "wifi_creds.h"
 #include "wifi_setup.h"
+#include "fw_update.h"
 
 static constexpr uint32_t CONNECT_TIMEOUT_MS = 20000;
 static constexpr uint32_t NTP_TIMEOUT_MS = 15000;
@@ -25,6 +26,7 @@ const char *WifiTime::status() const {
   if (!settings.autoTime) return "auto time off";
   if (!credsHaveNetwork()) return "no network set";
   if (wifiSetup.active()) return "setup running";
+  if (firmwareUpdate.active()) return "update screen open";
   return status_;
 }
 
@@ -33,7 +35,7 @@ void WifiTime::cancel() {
 }
 
 void WifiTime::update(uint32_t now) {
-  if (wifiSetup.active()) return;  // the setup screen owns the radio
+  if (wifiSetup.active() || firmwareUpdate.active()) return;  // those screens own the radio
   if (phase_ == Phase::Idle) {
     if (!enabled() || (int32_t)(now - nextTry_) < 0) return;
     char pass[WIFI_PASS_MAX + 1];

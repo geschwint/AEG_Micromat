@@ -79,6 +79,24 @@ enum class Str : uint8_t {
   PageTesting,
   PageOk,
   PageTryAgain,
+  // Firmware update screen and page
+  FirmwareUpdate,
+  NotWhileCooking,
+  UpdateSignIn,
+  UpdateHome,       // printf format, %s = IP address
+  UpdateReceiving,  // printf format, %u = percent
+  UpdateDone,
+  UpdateFailed,     // printf format, %s = reason
+  UpdateClosed,
+  PageVersion,
+  PageFile,
+  PageInstall,
+  PageUpdateNote,
+  PageUpdateOk,
+  PageUpdateFailed,
+  PageSignIn,
+  PageWrongPassword,
+  PageBrowserHint,
   Count
 };
 

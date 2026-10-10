@@ -1,8 +1,7 @@
 #include "wifi_setup.h"
-#include <DNSServer.h>
 #include <WebServer.h>
 #include <WiFi.h>
-#include <esp_random.h>
+#include "hotspot.h"
 #include "settings.h"
 #include "ui_text.h"
 #include "wifi_creds.h"
@@ -16,40 +15,13 @@ static constexpr uint32_t CLOSE_AFTER_OK_MS = 20000;  // let the phone show the 
 static constexpr uint8_t MAX_NETWORKS = 15;
 
 static WebServer server(80);
-static DNSServer dns;
 
 // Networks found by the last scan, strongest first, no duplicates.
 static char networks[MAX_NETWORKS][33];
 static int8_t networkRssi[MAX_NETWORKS];
 static uint8_t networkCount = 0;
 
-// --- Page building ------------------------------------------------------------------------
-static void appendEscaped(String &out, const char *s) {
-  for (; *s; s++) {
-    switch (*s) {
-      case '&':  out += "&amp;"; break;
-      case '<':  out += "&lt;"; break;
-      case '>':  out += "&gt;"; break;
-      case '"':  out += "&quot;"; break;
-      case '\'': out += "&#39;"; break;
-      default:   out += *s;
-    }
-  }
-}
-
-static String pageStart(bool refresh) {
-  String p = F("<!DOCTYPE html><html><head><meta charset='utf-8'>"
-               "<meta name='viewport' content='width=device-width,initial-scale=1'>");
-  if (refresh) p += F("<meta http-equiv='refresh' content='2'>");
-  p += F("<title>Micromat</title><style>"
-         "body{font-family:sans-serif;background:#101418;color:#e0e6ea;margin:0;padding:16px;max-width:480px}"
-         "h1{color:#ffa000;font-size:1.4em}label.n{display:block;padding:10px;margin:6px 0;background:#263238;"
-         "border-radius:6px}input[type=text],input[type=password]{width:100%;box-sizing:border-box;padding:10px;"
-         "font-size:1em;margin:6px 0 12px}button{background:#ffa000;border:0;border-radius:6px;padding:12px 20px;"
-         "font-size:1em}a{color:#9eb3c2}.err{color:#ff7961}.ok{color:#66bb6a}.r{float:right;color:#9eb3c2}"
-         "</style></head><body><h1>Micromat Wi-Fi</h1>");
-  return p;
-}
+static const char *const HEADING = "Micromat Wi-Fi";
 
 // --- Control --------------------------------------------------------------------------------
 static void startScan() {
@@ -86,29 +58,16 @@ static void collectScan() {
 
 void WifiSetup::start() {
   if (running_) return;
-  WiFi.mode(WIFI_AP_STA);  // STA side for scanning and testing the chosen network
-  uint8_t mac[6];
-  WiFi.macAddress(mac);
-  snprintf(apName_, sizeof(apName_), "Micromat-%02X%02X", mac[4], mac[5]);
-  static const char CHARS[] = "abcdefghjkmnpqrstuvwxyz23456789";  // no 0/o, 1/l/i
-  for (uint8_t i = 0; i < 8; i++) apPass_[i] = CHARS[esp_random() % (sizeof(CHARS) - 1)];
-  apPass_[8] = '\0';
-  snprintf(qr_, sizeof(qr_), "WIFI:T:WPA;S:%s;P:%s;;", apName_, apPass_);
-
-  WiFi.softAP(apName_, apPass_);
-  dns.start(53, "*", WiFi.softAPIP());  // every name -> us, so phones open the page by themselves
+  hotspotStart();
   networkCount = 0;
   startScan();
   scanning_ = true;
-
   registerPages();
   server.begin();
-
   running_ = true;
   state_ = State::Waiting;
   lastActivity_ = millis();
-  stations_ = 0;
-  Serial.printf("[%7lu] wifi setup: network \"%s\" open\n", lastActivity_, apName_);
+  Serial.printf("[%7lu] wifi setup: open\n", lastActivity_);
 }
 
 // Handlers are registered once (WebServer keeps them across stop/begin).
@@ -120,7 +79,7 @@ void WifiSetup::registerPages() {
   server.on("/", HTTP_GET, [this]() {
     lastActivity_ = millis();
     if (state_ == State::Testing) {
-      String p = pageStart(true);
+      String p = htmlStart(HEADING, true);
       p += "<p>";
       p += tr(Str::PageTesting);
       p += "</p></body></html>";
@@ -128,14 +87,14 @@ void WifiSetup::registerPages() {
       return;
     }
     if (state_ == State::Success) {
-      String p = pageStart(false);
+      String p = htmlStart(HEADING);
       p += "<p class='ok'>";
       p += tr(Str::PageOk);
       p += "</p></body></html>";
       server.send(200, "text/html", p);
       return;
     }
-    String p = pageStart(scanning_);
+    String p = htmlStart(HEADING, scanning_);
     Str err = state_ == State::NotFound ? Str::SetupNotFound
             : state_ == State::NoConnect ? Str::SetupNoConnect
             : state_ == State::SaveFailed ? Str::SetupSaveFailed
@@ -144,7 +103,7 @@ void WifiSetup::registerPages() {
       p += "<p class='err'>";
       p += tr(err);
       p += " (";
-      appendEscaped(p, testSsid_);
+      htmlEscape(p, testSsid_);
       p += ")</p>";
     }
     p += "<form method='post' action='/save'><h2>";
@@ -157,9 +116,9 @@ void WifiSetup::registerPages() {
     }
     for (uint8_t i = 0; i < networkCount; i++) {
       p += "<label class='n'><input type='radio' name='ssid' value='";
-      appendEscaped(p, networks[i]);
+      htmlEscape(p, networks[i]);
       p += "'> ";
-      appendEscaped(p, networks[i]);
+      htmlEscape(p, networks[i]);
       p += "<span class='r'>";
       p += networkRssi[i];
       p += " dBm</span></label>";
@@ -217,21 +176,15 @@ void WifiSetup::registerPages() {
 void WifiSetup::stop() {
   if (!running_) return;
   server.stop();
-  dns.stop();
-  WiFi.scanDelete();
-  WiFi.softAPdisconnect(true);
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
+  hotspotStop();
   memset(testPass_, 0, sizeof(testPass_));
-  memset(apPass_, 0, sizeof(apPass_));
-  memset(qr_, 0, sizeof(qr_));
   running_ = false;
   scanning_ = false;
   if (state_ == State::Waiting || state_ == State::Testing) state_ = State::Off;
   Serial.printf("[%7lu] wifi setup: closed\n", millis());
 }
 
-bool WifiSetup::phoneConnected() const { return running_ && stations_ > 0; }
+bool WifiSetup::phoneConnected() const { return running_ && hotspotStations() > 0; }
 
 void WifiSetup::finishTest(State result) {
   WiFi.disconnect(false);  // station side only; the setup network stays
@@ -243,21 +196,19 @@ void WifiSetup::finishTest(State result) {
 
 void WifiSetup::update(uint32_t now) {
   if (!running_) return;
-  dns.processNextRequest();
+  hotspotUpdate(now);
   server.handleClient();
   if (scanning_ && WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
     collectScan();
     scanning_ = false;
   }
-  if (now - lastStationPoll_ >= 1000) {  // a joined phone keeps the setup open
-    lastStationPoll_ = now;
-    stations_ = WiFi.softAPgetStationNum();
-    if (stations_ > 0) lastActivity_ = now;
-  }
+  if (hotspotStations() > 0) lastActivity_ = now;  // a joined phone keeps the setup open
 
   if (state_ == State::Testing) {
     wl_status_t st = WiFi.status();
-    uint32_t t = now - testStart_;
+    // Signed: testStart_ comes from millis() in a web handler and can be a
+    // little later than `now` (taken at the start of loop()).
+    int32_t t = (int32_t)(now - testStart_);
     if (st == WL_CONNECTED) {
       bool saved = credsSave(testSsid_, testPass_);
       if (saved && !settings.wifiOn) {
@@ -266,15 +217,16 @@ void WifiSetup::update(uint32_t now) {
       }
       finishTest(saved ? State::Success : State::SaveFailed);
       successAt_ = now;
-    } else if (t > TEST_MIN_MS && st == WL_NO_SSID_AVAIL) {
+    } else if (t > (int32_t)TEST_MIN_MS && st == WL_NO_SSID_AVAIL) {
       finishTest(State::NotFound);
-    } else if ((t > TEST_MIN_MS && st == WL_CONNECT_FAILED) || t > TEST_TIMEOUT_MS) {
+    } else if ((t > (int32_t)TEST_MIN_MS && st == WL_CONNECT_FAILED) || t > (int32_t)TEST_TIMEOUT_MS) {
       finishTest(State::NoConnect);
     }
   }
-  if (state_ == State::Success && now - successAt_ > CLOSE_AFTER_OK_MS) {
+  // Signed for the same reason (lastActivity_ is also set from millis()).
+  if (state_ == State::Success && (int32_t)(now - successAt_) > (int32_t)CLOSE_AFTER_OK_MS) {
     stop();
-  } else if (state_ != State::Testing && now - lastActivity_ > SETUP_IDLE_MS) {
+  } else if (state_ != State::Testing && (int32_t)(now - lastActivity_) > (int32_t)SETUP_IDLE_MS) {
     stop();
     if (state_ != State::Success) state_ = State::TimedOut;
   }

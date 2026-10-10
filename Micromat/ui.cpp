@@ -5,6 +5,8 @@
 #include "perf.h"
 #include "ui_text.h"
 #include "wifi_setup.h"
+#include "fw_update.h"
+#include "hotspot.h"
 
 static Arduino_GFX *gfx_;
 static App *app_;
@@ -37,7 +39,7 @@ static lv_obj_t *editTitle, *editA, *editSep, *editB, *editInfo, *editHint;
 static lv_obj_t *wifiView, *wifiTitle, *wifiQr, *wifiCaps[3], *wifiVals[3], *wifiStatus, *wifiHint;
 static constexpr int32_t QR_PX = 112;
 // Service view
-static constexpr uint8_t SERVICE_LINES = 8;
+static constexpr uint8_t SERVICE_LINES = 10;
 static lv_obj_t *serviceTitle, *serviceLines[SERVICE_LINES], *serviceHint;
 
 // Fonts: Montserrat via Tiny TTF (built-in LVGL fonts are ASCII only, Swedish
@@ -335,7 +337,7 @@ static void buildServiceView(lv_obj_t *scr) {
   lv_obj_align(serviceTitle, LV_ALIGN_TOP_LEFT, 10, 4);
   for (uint8_t i = 0; i < SERVICE_LINES; i++) {
     serviceLines[i] = makeLabel(serviceView, font14, C_DIM_TEXT);
-    lv_obj_set_pos(serviceLines[i], 10, 32 + i * 22);
+    lv_obj_set_pos(serviceLines[i], 10, 30 + i * 18);  // 10 lines of 14 px text above the hint
   }
   serviceHint = makeLabel(serviceView, font14, C_GREY);
   lv_obj_align(serviceHint, LV_ALIGN_BOTTOM_MID, 0, -6);
@@ -489,46 +491,82 @@ static void refreshEdit() {
   setHint(editHint, app_->editId() == EditId::ClockTime ? Str::ClockHint : Str::EditHint);
 }
 
-// While the setup network is open: QR code + its name/password/address, and
-// what's happening. Afterwards only the result.
-static void refreshWifi() {
-  setTitle(wifiTitle, tr(Str::WifiSetup));
-  bool open = wifiSetup.active();
+// Wi-Fi setup and firmware update share this view. While the hotspot is open:
+// QR code + its name/password/address, and what's happening; afterwards only
+// the result.
+static void refreshHotspotView(bool update) {
+  setTitle(wifiTitle, tr(update ? Str::FirmwareUpdate : Str::WifiSetup));
+  bool open = hotspotActive();
   static char qrShown[64] = "";
-  if (open && strcmp(qrShown, wifiSetup.qrText()) != 0) {
-    strlcpy(qrShown, wifiSetup.qrText(), sizeof(qrShown));
+  if (open && strcmp(qrShown, hotspotQr()) != 0) {
+    strlcpy(qrShown, hotspotQr(), sizeof(qrShown));
     lv_qrcode_update(wifiQr, qrShown, strlen(qrShown));
   }
   if (!open) qrShown[0] = '\0';
   setHidden(wifiQr, !open);
   static const Str CAPS[] = { Str::Network, Str::Password, Str::Address };
-  const char *vals[] = { wifiSetup.apName(), wifiSetup.apPass(), "192.168.4.1" };
+  const char *vals[] = { hotspotName(), hotspotPass(), HOTSPOT_IP };
   for (uint8_t i = 0; i < 3; i++) {
     setText(wifiCaps[i], open ? tr(CAPS[i]) : "");
     setText(wifiVals[i], open ? vals[i] : "");
   }
 
-  char buf[64];
+  char buf[128];
   const char *text = "";
   uint32_t color = C_YELLOW;
-  switch (wifiSetup.state()) {
-    case WifiSetup::State::Waiting:
-      text = tr(wifiSetup.phoneConnected() ? Str::SetupPhone : Str::SetupScan);
-      break;
-    case WifiSetup::State::Testing:
-      snprintf(buf, sizeof(buf), tr(Str::SetupTesting), wifiSetup.testSsid());
-      text = buf;
-      break;
-    case WifiSetup::State::Success:    text = tr(Str::SetupOk); color = C_GREEN; break;
-    case WifiSetup::State::NotFound:   text = tr(Str::SetupNotFound); color = C_RED; break;
-    case WifiSetup::State::NoConnect:  text = tr(Str::SetupNoConnect); color = C_RED; break;
-    case WifiSetup::State::SaveFailed: text = tr(Str::SetupSaveFailed); color = C_RED; break;
-    case WifiSetup::State::TimedOut:   text = tr(Str::SetupTimeout); color = C_GREY; break;
-    default: break;
+  const lv_font_t *font = font20;
+  if (update) {
+    switch (firmwareUpdate.state()) {
+      case FirmwareUpdate::State::Waiting:
+        snprintf(buf, sizeof(buf), "%s", tr(Str::UpdateSignIn));
+        if (firmwareUpdate.homeIp()[0]) {
+          size_t n = strlen(buf);
+          buf[n++] = '\n';
+          snprintf(buf + n, sizeof(buf) - n, tr(Str::UpdateHome), firmwareUpdate.homeIp());
+        }
+        text = buf;
+        font = font14;  // two or three lines
+        break;
+      case FirmwareUpdate::State::Receiving:
+        snprintf(buf, sizeof(buf), tr(Str::UpdateReceiving), firmwareUpdate.progress());
+        text = buf;
+        break;
+      case FirmwareUpdate::State::Done: text = tr(Str::UpdateDone); color = C_GREEN; break;
+      case FirmwareUpdate::State::Failed:
+        snprintf(buf, sizeof(buf), tr(Str::UpdateFailed), firmwareUpdate.error());
+        text = buf;
+        color = C_RED;
+        break;
+      case FirmwareUpdate::State::TimedOut: text = tr(Str::UpdateClosed); color = C_GREY; break;
+      default: break;
+    }
+  } else {
+    switch (wifiSetup.state()) {
+      case WifiSetup::State::Waiting:
+        text = tr(wifiSetup.phoneConnected() ? Str::SetupPhone : Str::SetupScan);
+        break;
+      case WifiSetup::State::Testing:
+        snprintf(buf, sizeof(buf), tr(Str::SetupTesting), wifiSetup.testSsid());
+        text = buf;
+        break;
+      case WifiSetup::State::Success:    text = tr(Str::SetupOk); color = C_GREEN; break;
+      case WifiSetup::State::NotFound:   text = tr(Str::SetupNotFound); color = C_RED; break;
+      case WifiSetup::State::NoConnect:  text = tr(Str::SetupNoConnect); color = C_RED; break;
+      case WifiSetup::State::SaveFailed: text = tr(Str::SetupSaveFailed); color = C_RED; break;
+      case WifiSetup::State::TimedOut:   text = tr(Str::SetupTimeout); color = C_GREY; break;
+      default: break;
+    }
   }
+  if (lv_obj_get_style_text_font(wifiStatus, LV_PART_MAIN) != font) lv_obj_set_style_text_font(wifiStatus, font, 0);
   setText(wifiStatus, text);
   setColor(wifiStatus, color);
-  setHint(wifiHint, open ? Str::SetupHint : Str::SetupDoneHint);
+  if (update && open && !app_->toast()) {  // the running version, next to the hint
+    snprintf(buf, sizeof(buf), "%s   %s", tr(Str::SetupHint), FirmwareUpdate::version());
+    setText(wifiHint, buf);
+    setColor(wifiHint, C_GREY);
+  } else {
+    setHint(wifiHint, open ? Str::SetupHint : Str::SetupDoneHint);
+  }
 }
 
 static void refreshService() {
@@ -554,9 +592,13 @@ static void refreshService() {
   snprintf(buf, sizeof(buf), "Loop max: %lu us   Heap free: %lu", (unsigned long)loopStats.maxUs(),
            (unsigned long)ESP.getFreeHeap());
   setText(serviceLines[6], buf);
-  snprintf(buf, sizeof(buf), "Run-on %s, heat %u s  Wi-Fi: %s", oven_->fanRunningOn() ? "yes" : "no",
-           oven_->recentHeatSeconds(), wifi_->status());
+  snprintf(buf, sizeof(buf), "Fan run-on: %s   Heat last 4 min: %u s", oven_->fanRunningOn() ? "yes" : "no",
+           oven_->recentHeatSeconds());
   setText(serviceLines[7], buf);
+  snprintf(buf, sizeof(buf), "Wi-Fi: %s", wifi_->status());
+  setText(serviceLines[8], buf);
+  snprintf(buf, sizeof(buf), "Firmware: %s (%s)", FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
+  setText(serviceLines[9], buf);
   setText(serviceTitle, tr(Str::Service));
   setText(serviceHint, tr(Str::ServiceHint));
 }
@@ -578,13 +620,14 @@ static void refresh(lv_timer_t *) {
   setHidden(menuView, s != Screen::Menu);
   setHidden(editView, s != Screen::Edit);
   setHidden(serviceView, s != Screen::Service);
-  setHidden(wifiView, s != Screen::WifiSetup);
+  setHidden(wifiView, s != Screen::WifiSetup && s != Screen::Update);
 
   if (dim) refreshDim();
   else if (s == Screen::Main) refreshMain();
   else if (s == Screen::Menu) refreshMenu();
   else if (s == Screen::Edit) refreshEdit();
-  else if (s == Screen::WifiSetup) refreshWifi();
+  else if (s == Screen::WifiSetup) refreshHotspotView(false);
+  else if (s == Screen::Update) refreshHotspotView(true);
   else refreshService();
 }
 

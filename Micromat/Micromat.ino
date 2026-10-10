@@ -16,6 +16,7 @@
 #include "inputs.h"
 #include "app.h"
 #include "settings.h"
+#include "fw_update.h"
 #include "wifi_creds.h"
 #include "wifi_setup.h"
 #include "wifi_time.h"
@@ -42,6 +43,17 @@ static void onInputEvent(InputEvent event, int32_t value) {
   app.onInput(event, value);
 }
 
+// A firmware transfer blocks loop() for 10-40 s; this keeps the safety-related
+// modules and the display (progress) running meanwhile. The oven is idle then.
+static void pumpDuringUpdate() {
+  uint32_t now = millis();
+  door.update(now);
+  oven.update(now, door.closed());
+  outputs.update(now, door.closed());
+  buzzer.update(now);
+  uiUpdate();
+}
+
 void setup() {
   outputs.begin();  // first: every output OFF
 
@@ -49,7 +61,8 @@ void setup() {
   // With no reader on the PC, USB serial writes would otherwise wait up to
   // 100 ms each for buffer space, stalling loop(). Drop the log text instead.
   Serial.setTxTimeoutMs(0);
-  Serial.println("Micromat controller starting");
+  Serial.printf("Micromat controller starting (firmware %s, %s)\n", FirmwareUpdate::version(),
+                FirmwareUpdate::runningSlot());
 
   loadSettings();  // before anything that uses them (buzzer volume, UI language, ...)
   credsBegin();    // Wi-Fi network store; also stops the Wi-Fi driver keeping a plain-text copy
@@ -69,6 +82,7 @@ void setup() {
   app.begin(oven, door, buzzer, rtcClock, wifiTime);
   inputs.begin(onInputEvent);
   uiBegin(gfx, app, oven, door, rtcClock, outputs, inputs, wifiTime);  // also sets up the backlight PWM
+  firmwareUpdate.setProgressHook(pumpDuringUpdate);
 
   enableLoopWDT();
   Serial.println("ready (send any unknown text for help)");
@@ -96,6 +110,8 @@ void loop() {
   buzzer.update(now);
   rtcClock.update(now);
   wifiSetup.update(now);               // Wi-Fi setup network + web page, while that screen is open
+  firmwareUpdate.update(now);          // firmware update page / OTA, while that screen is open
+  firmwareUpdate.confirmIfHealthy(now);  // a new firmware confirms itself after 30 s
   wifiTime.update(now);                // clock over Wi-Fi (NTP), when enabled
   consoleUpdate(oven, door, rtcClock, outputs, inputs, wifiTime);
   uiUpdate();
