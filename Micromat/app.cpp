@@ -534,7 +534,9 @@ void App::menuSelect() {
       if (i == 0) {
         openMenu(MenuId::WifiOn, choiceCurrent(MenuId::WifiOn));
       } else if (i == 1) {
-        if (credsKeyReady()) {
+        // Choosing a network is the owner's go-ahead for the board's one-time
+        // eFuse key (a no-op once it exists). OTA and log download don't need it.
+        if (credsCreateKey()) {
           startWifiSetup();
         } else {
           buzzer_->error();

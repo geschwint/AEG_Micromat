@@ -77,7 +77,8 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
   } else if (cmd == "keygen") {
     Log.println(credsKeyReady() ? "keygen: the encryption key already exists"
                                    : "keygen: burns a random key into an eFuse block. PERMANENT (one of six key "
-                                     "blocks, nothing else changes). To go ahead: keygen YES");
+                                     "blocks, nothing else changes). Settings -> Wi-Fi -> Network creates it too. "
+                                     "To go ahead: keygen YES");
   } else if (cmd == "keygen YES") {
     Log.println(credsCreateKey() ? "keygen: OK, Wi-Fi passwords can now be saved" : "keygen: FAILED");
   }

@@ -38,6 +38,9 @@ bool credsKeyReady() {
 
 bool credsCreateKey() {
   if (credsKeyReady()) return true;
+  // Only a block that is completely blank (purpose USER, all zero, no
+  // protection) counts as unused, so one left half-written by a power cut
+  // during an earlier burn is skipped and the next blank one is used.
   esp_efuse_block_t block = esp_efuse_find_unused_key_block();
   if (block == EFUSE_BLK_KEY_MAX) {
     Log.println("keygen: no unused eFuse key block");
@@ -48,8 +51,21 @@ bool credsCreateKey() {
   // Also read- and write-protects the block (HMAC keys are never readable).
   esp_err_t err = esp_efuse_write_key(block, ESP_EFUSE_KEY_PURPOSE_HMAC_UP, key, sizeof(key));
   memset(key, 0, sizeof(key));
-  Log.printf("keygen: eFuse key block %d: %s\n", (int)(block - EFUSE_BLK_KEY0), esp_err_to_name(err));
-  return err == ESP_OK && credsKeyReady();
+  int n = block - EFUSE_BLK_KEY0;
+  Log.printf("keygen: eFuse key block %d: %s\n", n, esp_err_to_name(err));
+  if (err != ESP_OK) return false;
+  // Read back what was burned: the purpose, and that the key can't be read.
+  esp_efuse_block_t found;
+  if (!esp_efuse_find_purpose(ESP_EFUSE_KEY_PURPOSE_HMAC_UP, &found) || found != block) {
+    Log.printf("keygen: block %d does not show purpose HMAC_UP\n", n);
+    return false;
+  }
+  if (!esp_efuse_get_key_dis_read(block)) {
+    Log.printf("keygen: block %d is not read-protected\n", n);
+    return false;
+  }
+  Log.printf("keygen: created, block %d (purpose HMAC_UP, read-protected)\n", n);
+  return true;
 }
 
 static bool aesKey(uint8_t out[32]) {
@@ -59,6 +75,11 @@ static bool aesKey(uint8_t out[32]) {
 
 // --- Store ------------------------------------------------------------------------------
 void credsBegin() {
+  // The eFuse driver creates its lock on first use; doing that later, in the
+  // middle of `keygen YES`, once aborted (2026-10-11, mutex creation returned
+  // NULL with plenty of RAM free; not reproducible). Create it now, at start,
+  // with an empty write batch: cancelled, so nothing is written.
+  if (esp_efuse_batch_write_begin() == ESP_OK) esp_efuse_batch_write_cancel();
   WiFi.persistent(false);  // the Wi-Fi driver must not keep its own (plain text) copy
   Preferences p;
   if (p.begin("nvs.net80211", false)) {  // erase anything it saved before

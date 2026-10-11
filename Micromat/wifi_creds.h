@@ -6,11 +6,13 @@
 // key is read-protected, so neither software nor a flash dump can see it, and
 // a copy of the flash is useless on another chip.
 //
-// The eFuse key is created once per chip with credsCreateKey() (serial command
-// `keygen YES`). Burning an eFuse is permanent; it uses one of the six key
-// blocks and changes nothing else. Without the key, passwords are refused (never
-// stored in plain text). Risks, limits and status: HARDWARE.md, "eFuse key for
-// the Wi-Fi password". Don't burn it without the owner's approval.
+// The eFuse key is created once per chip with credsCreateKey(): automatically
+// when the owner opens Settings -> Wi-Fi -> Network on a board without one (that
+// choice is the approval), or with the serial command `keygen YES`. Burning an
+// eFuse is permanent; it uses one of the six key blocks and changes nothing
+// else. Without the key, passwords are refused (never stored in plain text).
+// Risks, limits and status: HARDWARE.md, "eFuse key for the Wi-Fi password".
+// Never burn it from anywhere else, or without the owner's say-so.
 // HMAC_LABEL (wifi_creds.cpp) is part of the key derivation: changing it makes
 // a stored password unreadable.
 //
@@ -24,7 +26,7 @@ constexpr size_t WIFI_PASS_MAX = 64;
 
 void credsBegin();           // call once at start, before any Wi-Fi use
 bool credsKeyReady();        // eFuse HMAC key present
-bool credsCreateKey();       // burns a random eFuse key (once per chip; permanent)
+bool credsCreateKey();       // burns a random eFuse key unless there is one (once per chip; permanent); checks the result
 bool credsHaveNetwork();     // a network name is stored
 const char *credsSsid();     // "" if none
 bool credsPassword(char *buf, size_t len);  // decrypts; false if it can't

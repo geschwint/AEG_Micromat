@@ -52,7 +52,7 @@ static const char *const ENGLISH[] = {
   "Not set",                                    // NotSet
   "Forget network",                             // ForgetNetwork
   "Network forgotten",                          // Forgotten
-  "No encryption key (serial: keygen)",         // NoKey
+  "Security key could not be created",          // NoKey
   "Wi-Fi setup",                                // WifiSetup
   "Password",                                   // Password
   "Address",                                    // Address
@@ -174,7 +174,7 @@ static const char *const SWEDISH[] = {
   "Inte inställt",                              // NotSet
   "Glöm nätverket",                             // ForgetNetwork
   "Nätverket glömt",                            // Forgotten
-  "Ingen krypteringsnyckel (serie: keygen)",    // NoKey
+  "Säkerhetsnyckeln kunde inte skapas",         // NoKey
   "Wi-Fi-inställning",                          // WifiSetup
   "Lösenord",                                   // Password
   "Adress",                                     // Address
@@ -296,7 +296,7 @@ static const char *const GERMAN[] = {
   "Nicht gesetzt",                              // NotSet
   "Netzwerk vergessen",                         // ForgetNetwork
   "Netzwerk gelöscht",                          // Forgotten
-  "Kein Schlüssel (seriell: keygen)",           // NoKey
+  "Schlüssel nicht erstellt",                   // NoKey
   "WLAN einrichten",                            // WifiSetup
   "Passwort",                                   // Password
   "Adresse",                                    // Address
@@ -418,7 +418,7 @@ static const char *const FRENCH[] = {
   "Non défini",                                 // NotSet
   "Oublier le réseau",                          // ForgetNetwork
   "Réseau oublié",                              // Forgotten
-  "Pas de clé (série : keygen)",                // NoKey
+  "Clé de sécurité non créée",                  // NoKey
   "Réglage Wi-Fi",                              // WifiSetup
   "Mot de passe",                               // Password
   "Adresse",                                    // Address
@@ -540,7 +540,7 @@ static const char *const SPANISH[] = {
   "Sin configurar",                             // NotSet
   "Olvidar la red",                             // ForgetNetwork
   "Red olvidada",                               // Forgotten
-  "Sin clave de cifrado (serie: keygen)",       // NoKey
+  "No se pudo crear la clave",                  // NoKey
   "Configurar Wi-Fi",                           // WifiSetup
   "Contraseña",                                 // Password
   "Dirección",                                  // Address
