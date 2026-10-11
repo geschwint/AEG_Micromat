@@ -63,7 +63,7 @@ Notes:
 
 ## GUI requirements
 
-320×240 landscape, dark background, large digits (as the current test layout). Captions in English for now; all UI strings go through one table so a language choice can be added to the menu later.
+320×240 landscape, dark background, large digits (as the current test layout). All UI strings go through one table per language: English, Svenska, Deutsch, Français, Español (Settings → Language). Translations are kept short enough for the screen (checked with the console command `texts N`).
 
 **Operation:** physical controls only (encoder, pot, panel buttons). **No touch buttons on the main screens.** Touch is reserved for special functions, and **used in the menu where it's easier**: tapping a row selects it (alternative to encoder turn + push). Future choices between few options (e.g. yes/no) get large touch buttons. Touch targets are at least 40 px because touch accuracy is about ±15 px near the edges.
 
@@ -79,7 +79,7 @@ Notes:
 | **Program menu** | Opened by the Program button. **Encoder browses the list, encoder push selects**, or tap a row; Stop or tapping the title goes back. Root: Defrost, Programs, Settings, About. |
 | **Defrost** | Food type (meat, poultry, fish, bread) → weight editor (100–2000 g) showing time and power → loads the program; beep + "Turn the food" halfway. |
 | **Programs** | Fixed presets (reheat plate, beverage, popcorn, soften butter, melt chocolate), 4 favourites, "Save as favourite" (stores the current time/power/rotate). Selecting loads the program; push/Quick start starts it. |
-| **Settings** (in the menu) | Clock (set time HH:MM; auto time over Wi-Fi/NTP), brightness, dimmed level, dim delay, sound (key clicks, volume), language (English / Svenska), Wi-Fi, Debug log, Firmware update. Saved in flash. |
+| **Settings** (in the menu) | Clock (set time HH:MM; auto time over Wi-Fi/NTP), brightness, dimmed level, dim delay, sound (key clicks, volume), language (English, Svenska, Deutsch, Français, Español), Wi-Fi, Debug log, Firmware update. Saved in flash. |
 | **Debug log** (Settings → Debug log) | **Logging On/Off**: everything the serial console shows is also written to a file on a microSD card, each line with the date and time; it rolls over at 1 MB, two files kept. **Download**: the same hotspot screen as Firmware update; after the password the page lists the log files (download) and has "Delete logs". No card: "No SD card", and the oven works as normal. |
 | **About** (last in the root menu) | Read-only list, scrolled with the encoder: firmware version and date, build fingerprint and slot; the oven's rating plate (AEG Micromat 143E/U, C71A000V ELC 03, E-Nr. 947.602 432, S-No 417 10918; photo `AboutTheMicro.jpg`); board (Waveshare ESP32-S3-Touch-LCD-2), chip and revision, CPU, flash, PSRAM, display, touch, clock chip (PCF85063A), relays (Velleman VMA400, magnetron on the original relay), LVGL and Arduino core versions. Fixed texts in `Micromat/about.h`. |
 | **Wi-Fi** (Settings → Wi-Fi) | **Wi-Fi On/Off** (master switch, off by default: the radio is never started when off), **Network** (opens the setup screen), **Forget network**. No credentials are ever built into the firmware. |

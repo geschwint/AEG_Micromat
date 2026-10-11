@@ -4,6 +4,8 @@
 #include "font_montserrat_ttf.h"
 #include "perf.h"
 #include "ui_text.h"
+#include "settings.h"
+#include "debug_log.h"
 #include "wifi_setup.h"
 #include "about.h"
 #include "fw_update.h"
@@ -278,8 +280,13 @@ static void buildSplashView(lv_obj_t *scr) {
   lv_label_set_text(model, OVEN_MODEL);
   lv_obj_align(model, LV_ALIGN_TOP_MID, 0, 26 + LOGO_AEG.header.h + 16);
   lv_obj_t *fw = makeLabel(splashView, font20, C_GREY);
-  char buf[48];
+  char buf[64];
   snprintf(buf, sizeof(buf), "%s %s  \xC2\xB7  %s", tr(Str::AboutFirmware), FIRMWARE_VERSION, FIRMWARE_DATE);
+  lv_point_t size;
+  lv_text_get_size(&size, buf, font20, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+  if (size.x > SCREEN_W - 24) {  // a long word for "Firmware" (e.g. French): version and date only
+    snprintf(buf, sizeof(buf), "%s  \xC2\xB7  %s", FIRMWARE_VERSION, FIRMWARE_DATE);
+  }
   lv_label_set_text(fw, buf);
   lv_obj_align(fw, LV_ALIGN_TOP_MID, 0, 26 + LOGO_AEG.header.h + 16 + 42);
 }
@@ -717,4 +724,20 @@ void uiBegin(Arduino_GFX *gfx, App &app, Oven &oven, Door &door, Clock &clock, O
 
 void uiUpdate() {
   lv_timer_handler();
+}
+
+void uiReportTexts(uint8_t language) {
+  if (language >= (uint8_t)Language::Count) return;
+  Language saved = settings.language;
+  settings.language = (Language)language;
+  auto width = [](const char *s, const lv_font_t *f) {
+    lv_point_t p;
+    lv_text_get_size(&p, s, f, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+    return (long)p.x;
+  };
+  Log.printf("texts %s: id w14 w20 w28 wbig text\n", languageName(language));
+  for (uint8_t i = 0; i < (uint8_t)Str::Count; i++) {
+    const char *s = tr((Str)i);
+    Log.printf("T %u %ld %ld %ld %ld %s\n", i, width(s, font14), width(s, font20), width(s, font28), width(s, bigFont), s);  }
+  settings.language = saved;
 }

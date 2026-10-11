@@ -1,5 +1,5 @@
 // Every text shown on screen, looked up by id in the table for the language
-// chosen in Settings. Serial/log text is not translated. Texts are UTF-8; the
+// chosen in Settings (English, Svenska, Deutsch, Français, Español). Serial/log text is not translated. Texts are UTF-8; the
 // UI fonts (Tiny TTF Montserrat) include å, ä, ö.
 #pragma once
 #include <Arduino.h>

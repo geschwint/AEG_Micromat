@@ -155,7 +155,7 @@ static const char *const SWEDISH[] = {
   "Värm tallrik",                               // ReheatPlate
   "Dryck",                                      // Beverage
   "Popcorn",                                    // Popcorn
-  "Mjuka upp smör",                             // SoftenButter
+  "Mjukt smör",                                 // SoftenButter
   "Smält choklad",                              // MeltChocolate
   "Favorit",                                    // Favourite
   "Spara som favorit",                          // SaveFavourite
@@ -196,7 +196,7 @@ static const char *const SWEDISH[] = {
   "Testar anslutningen...",                     // PageTesting
   "Ansluten! Nätverket är sparat. Du kan stänga sidan.",  // PageOk
   "Försök igen",                                // PageTryAgain
-  "Uppdatera programvara",                      // FirmwareUpdate
+  "Uppdatering",                                // FirmwareUpdate
   "Inte under tillagning",                      // NotWhileCooking
   "Öppna adressen och ange lösenordet",          // UpdateSignIn
   "På ditt nätverk: %s",                        // UpdateHome
@@ -245,14 +245,388 @@ static const char *const SWEDISH[] = {
   "orig. relä",                                 // OriginalRelay
 };
 
+static const char *const GERMAN[] = {
+  "OFFEN",                                      // Open
+  "Ende",                                       // End
+  "Pause",                                      // Paused
+  "Timer",                                      // Timer
+  "Menü",                                       // Menu
+  "Einstellungen",                              // Settings
+  "Auftauen",                                   // Defrost
+  "Programme",                                  // Programs
+  "Uhr",                                        // Clock
+  "Uhrzeit stellen",                            // SetTime
+  "Auto-Zeit (WLAN)",                           // AutoTime
+  "Helligkeit",                                 // Brightness
+  "Dimmstufe",                                  // DimLevel
+  "Dimmen nach",                                // DimDelay
+  "Nie",                                        // Never
+  "Ton",                                        // Sound
+  "Tastenton",                                  // KeyClicks
+  "Lautstärke",                                 // Volume
+  "Leise",                                      // Low
+  "Mittel",                                     // Medium
+  "Laut",                                       // High
+  "Ein",                                        // On
+  "Aus",                                        // Off
+  "Sprache",                                    // Language
+  "Fleisch",                                    // Meat
+  "Geflügel",                                   // Poultry
+  "Fisch",                                      // Fish
+  "Brot",                                       // Bread
+  "Aufwärmen",                                  // ReheatPlate
+  "Getränk",                                    // Beverage
+  "Popcorn",                                    // Popcorn
+  "Butter weich",                               // SoftenButter
+  "Schokolade",                                 // MeltChocolate
+  "Favorit",                                    // Favourite
+  "Favorit speichern",                          // SaveFavourite
+  "Leer",                                       // Empty
+  "Erst eine Zeit einstellen",                  // SetTimeFirst
+  "Gespeichert",                                // Saved
+  "Essen wenden",                               // TurnFood
+  "WLAN ist aus oder ohne Netzwerk",            // NoWifi
+  "Drehen + drücken, tippen   Stop: zurück",    // MenuHint
+  "Drehen: Wert  Drücken: OK  Stop: zurück",    // EditHint
+  "Drehen  Drücken: weiter  Tippen: Feld",      // ClockHint
+  "Service",                                    // Service
+  "Stop/Program/Drücken: Ende",                 // ServiceHint
+  "WLAN",                                       // Wifi
+  "Netzwerk",                                   // Network
+  "Nicht gesetzt",                              // NotSet
+  "Netzwerk vergessen",                         // ForgetNetwork
+  "Netzwerk gelöscht",                          // Forgotten
+  "Kein Schlüssel (seriell: keygen)",           // NoKey
+  "WLAN einrichten",                            // WifiSetup
+  "Passwort",                                   // Password
+  "Adresse",                                    // Address
+  "Code mit dem Handy scannen",                 // SetupScan
+  "Handy verbunden: Netzwerk wählen",           // SetupPhone
+  "Teste %s...",                                // SetupTesting
+  "Verbunden und gespeichert",                  // SetupOk
+  "Netzwerk nicht gefunden",                    // SetupNotFound
+  "Keine Verbindung: falsches Passwort?",       // SetupNoConnect
+  "Passwort nicht gespeichert",                 // SetupSaveFailed
+  "Zeit abgelaufen",                            // SetupTimeout
+  "Stop: abbrechen",                            // SetupHint
+  "Stop/Drücken: zurück",                       // SetupDoneHint
+  "Wählen Sie Ihr Netzwerk",                    // PageChoose
+  "Anderes Netzwerk (Name)",                    // PageOther
+  "Verbinden",                                  // PageConnect
+  "Erneut suchen",                              // PageRescan
+  "Suche nach Netzwerken...",                   // PageSearching
+  "Verbindung wird getestet...",                // PageTesting
+  "Verbunden! Das Netzwerk ist gespeichert. Sie können diese Seite schließen.",  // PageOk
+  "Erneut versuchen",                           // PageTryAgain
+  "Firmware-Update",                            // FirmwareUpdate
+  "Nicht während des Garens",                   // NotWhileCooking
+  "Adresse öffnen und Passwort eingeben",       // UpdateSignIn
+  "In Ihrem Netzwerk: %s",                      // UpdateHome
+  "Empfange... %u %%",                          // UpdateReceiving
+  "Installiert, Neustart...",                   // UpdateDone
+  "Update fehlgeschlagen: %s",                  // UpdateFailed
+  "Geschlossen (keine Aktivität)",              // UpdateClosed
+  "Laufende Version",                           // PageVersion
+  "Firmware-Datei (.bin)",                      // PageFile
+  "Installieren",                               // PageInstall
+  "Dauert etwa 30 s. Lassen Sie diese Seite offen; der Ofen startet danach neu.",  // PageUpdateNote
+  "Installiert. Der Ofen startet jetzt neu.",   // PageUpdateOk
+  "Update fehlgeschlagen:",                     // PageUpdateFailed
+  "Anmelden",                                   // PageSignIn
+  "Falsches Passwort",                          // PageWrongPassword
+  "Öffnet sich hier keine Dateiauswahl, öffnen Sie http://192.168.4.1 in Ihrem normalen Browser (Chrome, Safari).",  // PageBrowserHint
+  "Debug-Protokoll",                            // DebugLog
+  "Protokollieren",                             // Logging
+  "Herunterladen",                              // DownloadLogs
+  "Keine SD-Karte",                             // NoSdCard
+  "Noch keine Protokolldateien.",               // PageNoLogs
+  "Protokolle löschen",                         // PageDeleteLogs
+  "Protokolle gelöscht.",                       // PageLogsDeleted
+  "Info",                                       // About
+  "Firmware",                                   // AboutFirmware
+  "Datum",                                      // AboutDate
+  "Build",                                      // AboutBuild
+  "Ofen",                                       // AboutOven
+  "Modell",                                     // AboutOvenModel
+  "Typ",                                        // AboutType
+  "E-Nr.",                                      // AboutENr
+  "Serien-Nr.",                                 // AboutSerial
+  "Platine",                                    // AboutBoard
+  "Modell",                                     // AboutModel
+  "Chip",                                       // AboutChip
+  "CPU",                                        // AboutCpu
+  "Flash",                                      // AboutFlash
+  "PSRAM",                                      // AboutPsram
+  "Display",                                    // AboutDisplay
+  "Touch",                                      // AboutTouch
+  "Uhrenchip",                                  // AboutClockChip
+  "Relais",                                     // AboutRelays
+  "Magnetron",                                  // AboutMagnetron
+  "LVGL",                                       // AboutLvgl
+  "Arduino-Core",                               // AboutCore
+  "orig. Relais",                               // OriginalRelay
+};
+
+static const char *const FRENCH[] = {
+  "Ouvert",                                     // Open
+  "Fin",                                        // End
+  "Pause",                                      // Paused
+  "Minuterie",                                  // Timer
+  "Menu",                                       // Menu
+  "Réglages",                                   // Settings
+  "Décongeler",                                 // Defrost
+  "Programmes",                                 // Programs
+  "Horloge",                                    // Clock
+  "Régler l'heure",                             // SetTime
+  "Heure auto (Wi-Fi)",                         // AutoTime
+  "Luminosité",                                 // Brightness
+  "Niveau veille",                              // DimLevel
+  "Veille après",                               // DimDelay
+  "Jamais",                                     // Never
+  "Son",                                        // Sound
+  "Bip touches",                                // KeyClicks
+  "Volume",                                     // Volume
+  "Faible",                                     // Low
+  "Moyen",                                      // Medium
+  "Fort",                                       // High
+  "Oui",                                        // On
+  "Non",                                        // Off
+  "Langue",                                     // Language
+  "Viande",                                     // Meat
+  "Volaille",                                   // Poultry
+  "Poisson",                                    // Fish
+  "Pain",                                       // Bread
+  "Réchauffer",                                 // ReheatPlate
+  "Boisson",                                    // Beverage
+  "Pop-corn",                                   // Popcorn
+  "Beurre mou",                                 // SoftenButter
+  "Chocolat",                                   // MeltChocolate
+  "Favori",                                     // Favourite
+  "Enregistrer favori",                         // SaveFavourite
+  "Vide",                                       // Empty
+  "Réglez d'abord une durée",                   // SetTimeFirst
+  "Enregistré",                                 // Saved
+  "Retournez l'aliment",                        // TurnFood
+  "Wi-Fi désactivé ou sans réseau",             // NoWifi
+  "Tourner/appuyer/toucher  Stop : retour",     // MenuHint
+  "Tourner : régler  Appui : OK  Stop : retour",  // EditHint
+  "Tourner  Appui : suite  Toucher : champ",    // ClockHint
+  "Service",                                    // Service
+  "Stop/Program/appui : quitter",               // ServiceHint
+  "Wi-Fi",                                      // Wifi
+  "Réseau",                                     // Network
+  "Non défini",                                 // NotSet
+  "Oublier le réseau",                          // ForgetNetwork
+  "Réseau oublié",                              // Forgotten
+  "Pas de clé (série : keygen)",                // NoKey
+  "Réglage Wi-Fi",                              // WifiSetup
+  "Mot de passe",                               // Password
+  "Adresse",                                    // Address
+  "Scannez le code avec votre téléphone",       // SetupScan
+  "Téléphone connecté : choisissez le réseau",  // SetupPhone
+  "Test de %s...",                              // SetupTesting
+  "Connecté et enregistré",                     // SetupOk
+  "Réseau introuvable",                         // SetupNotFound
+  "Connexion impossible : mot de passe ?",      // SetupNoConnect
+  "Impossible d'enregistrer le mot de passe",   // SetupSaveFailed
+  "Délai dépassé",                              // SetupTimeout
+  "Stop : annuler",                             // SetupHint
+  "Stop/appui : retour",                        // SetupDoneHint
+  "Choisissez votre réseau",                    // PageChoose
+  "Autre réseau (nom)",                         // PageOther
+  "Connecter",                                  // PageConnect
+  "Rechercher à nouveau",                       // PageRescan
+  "Recherche des réseaux...",                   // PageSearching
+  "Test de la connexion...",                    // PageTesting
+  "Connecté ! Le réseau est enregistré. Vous pouvez fermer cette page.",  // PageOk
+  "Réessayer",                                  // PageTryAgain
+  "Mise à jour",                                // FirmwareUpdate
+  "Pas pendant la cuisson",                     // NotWhileCooking
+  "Ouvrez l'adresse et saisissez le mot de passe",  // UpdateSignIn
+  "Sur votre réseau : %s",                      // UpdateHome
+  "Réception... %u %%",                         // UpdateReceiving
+  "Installé, redémarrage...",                   // UpdateDone
+  "Échec de la mise à jour : %s",               // UpdateFailed
+  "Fermé (aucune activité)",                    // UpdateClosed
+  "Version actuelle",                           // PageVersion
+  "Fichier du micrologiciel (.bin)",            // PageFile
+  "Installer",                                  // PageInstall
+  "Environ 30 s. Gardez cette page ouverte ; le four redémarre ensuite.",  // PageUpdateNote
+  "Installé. Le four redémarre maintenant.",    // PageUpdateOk
+  "Échec de la mise à jour :",                  // PageUpdateFailed
+  "Se connecter",                               // PageSignIn
+  "Mot de passe incorrect",                     // PageWrongPassword
+  "Si aucun sélecteur de fichier ne s'ouvre ici, ouvrez http://192.168.4.1 dans votre navigateur habituel (Chrome, Safari).",  // PageBrowserHint
+  "Journal debug",                              // DebugLog
+  "Journalisation",                             // Logging
+  "Télécharger",                                // DownloadLogs
+  "Pas de carte SD",                            // NoSdCard
+  "Aucun fichier journal pour l'instant.",      // PageNoLogs
+  "Supprimer les journaux",                     // PageDeleteLogs
+  "Journaux supprimés.",                        // PageLogsDeleted
+  "À propos",                                   // About
+  "Micrologiciel",                              // AboutFirmware
+  "Date",                                       // AboutDate
+  "Build",                                      // AboutBuild
+  "Four",                                       // AboutOven
+  "Modèle",                                     // AboutOvenModel
+  "Type",                                       // AboutType
+  "N° E",                                       // AboutENr
+  "N° de série",                                // AboutSerial
+  "Carte",                                      // AboutBoard
+  "Modèle",                                     // AboutModel
+  "Puce",                                       // AboutChip
+  "CPU",                                        // AboutCpu
+  "Flash",                                      // AboutFlash
+  "PSRAM",                                      // AboutPsram
+  "Écran",                                      // AboutDisplay
+  "Tactile",                                    // AboutTouch
+  "Puce horloge",                               // AboutClockChip
+  "Relais",                                     // AboutRelays
+  "Magnétron",                                  // AboutMagnetron
+  "LVGL",                                       // AboutLvgl
+  "Noyau Arduino",                              // AboutCore
+  "relais orig.",                               // OriginalRelay
+};
+
+static const char *const SPANISH[] = {
+  "Abierto",                                    // Open
+  "Fin",                                        // End
+  "Pausa",                                      // Paused
+  "Temporizador",                               // Timer
+  "Menú",                                       // Menu
+  "Ajustes",                                    // Settings
+  "Descongelar",                                // Defrost
+  "Programas",                                  // Programs
+  "Reloj",                                      // Clock
+  "Poner la hora",                              // SetTime
+  "Hora auto (Wi-Fi)",                          // AutoTime
+  "Brillo",                                     // Brightness
+  "Nivel atenuado",                             // DimLevel
+  "Atenuar tras",                               // DimDelay
+  "Nunca",                                      // Never
+  "Sonido",                                     // Sound
+  "Clic de teclas",                             // KeyClicks
+  "Volumen",                                    // Volume
+  "Bajo",                                       // Low
+  "Medio",                                      // Medium
+  "Alto",                                       // High
+  "Sí",                                         // On
+  "No",                                         // Off
+  "Idioma",                                     // Language
+  "Carne",                                      // Meat
+  "Aves",                                       // Poultry
+  "Pescado",                                    // Fish
+  "Pan",                                        // Bread
+  "Recalentar",                                 // ReheatPlate
+  "Bebida",                                     // Beverage
+  "Palomitas",                                  // Popcorn
+  "Mantequilla",                                // SoftenButter
+  "Chocolate",                                  // MeltChocolate
+  "Favorito",                                   // Favourite
+  "Guardar favorito",                           // SaveFavourite
+  "Vacío",                                      // Empty
+  "Primero ajuste un tiempo",                   // SetTimeFirst
+  "Guardado",                                   // Saved
+  "Dé la vuelta a la comida",                   // TurnFood
+  "Wi-Fi apagado o sin red",                    // NoWifi
+  "Girar + pulsar, o tocar   Stop: atrás",      // MenuHint
+  "Girar: ajustar  Pulsar: OK  Stop: atrás",    // EditHint
+  "Girar: ajustar  Pulsar: sig.  Tocar: campo",  // ClockHint
+  "Servicio",                                   // Service
+  "Stop/Program/pulsar: salir",                 // ServiceHint
+  "Wi-Fi",                                      // Wifi
+  "Red",                                        // Network
+  "Sin configurar",                             // NotSet
+  "Olvidar la red",                             // ForgetNetwork
+  "Red olvidada",                               // Forgotten
+  "Sin clave de cifrado (serie: keygen)",       // NoKey
+  "Configurar Wi-Fi",                           // WifiSetup
+  "Contraseña",                                 // Password
+  "Dirección",                                  // Address
+  "Escanee el código con el móvil",             // SetupScan
+  "Móvil conectado: elija su red",              // SetupPhone
+  "Probando %s...",                             // SetupTesting
+  "Conectado y guardado",                       // SetupOk
+  "Red no encontrada",                          // SetupNotFound
+  "No conecta: ¿contraseña incorrecta?",        // SetupNoConnect
+  "No se pudo guardar la contraseña",           // SetupSaveFailed
+  "Tiempo agotado",                             // SetupTimeout
+  "Stop: cancelar",                             // SetupHint
+  "Stop/pulsar: atrás",                         // SetupDoneHint
+  "Elija su red",                               // PageChoose
+  "Otra red (nombre)",                          // PageOther
+  "Conectar",                                   // PageConnect
+  "Buscar de nuevo",                            // PageRescan
+  "Buscando redes...",                          // PageSearching
+  "Probando la conexión...",                    // PageTesting
+  "¡Conectado! La red está guardada. Puede cerrar esta página.",  // PageOk
+  "Reintentar",                                 // PageTryAgain
+  "Actualización",                              // FirmwareUpdate
+  "No mientras cocina",                         // NotWhileCooking
+  "Abra la dirección e introduzca la contraseña",  // UpdateSignIn
+  "En su red: %s",                              // UpdateHome
+  "Recibiendo... %u %%",                        // UpdateReceiving
+  "Instalado, reiniciando...",                  // UpdateDone
+  "Error de actualización: %s",                 // UpdateFailed
+  "Cerrado (sin actividad)",                    // UpdateClosed
+  "Versión actual",                             // PageVersion
+  "Archivo de firmware (.bin)",                 // PageFile
+  "Instalar",                                   // PageInstall
+  "Tarda unos 30 s. Mantenga esta página abierta; el horno se reinicia al terminar.",  // PageUpdateNote
+  "Instalado. El horno se reinicia ahora.",     // PageUpdateOk
+  "Error de actualización:",                    // PageUpdateFailed
+  "Entrar",                                     // PageSignIn
+  "Contraseña incorrecta",                      // PageWrongPassword
+  "Si aquí no se abre el selector de archivos, abra http://192.168.4.1 en su navegador habitual (Chrome, Safari).",  // PageBrowserHint
+  "Registro debug",                             // DebugLog
+  "Registrar",                                  // Logging
+  "Descargar",                                  // DownloadLogs
+  "Sin tarjeta SD",                             // NoSdCard
+  "Aún no hay archivos de registro.",           // PageNoLogs
+  "Borrar registros",                           // PageDeleteLogs
+  "Registros borrados.",                        // PageLogsDeleted
+  "Acerca de",                                  // About
+  "Firmware",                                   // AboutFirmware
+  "Fecha",                                      // AboutDate
+  "Build",                                      // AboutBuild
+  "Horno",                                      // AboutOven
+  "Modelo",                                     // AboutOvenModel
+  "Tipo",                                       // AboutType
+  "N.º E",                                      // AboutENr
+  "N.º de serie",                               // AboutSerial
+  "Placa",                                      // AboutBoard
+  "Modelo",                                     // AboutModel
+  "Chip",                                       // AboutChip
+  "CPU",                                        // AboutCpu
+  "Flash",                                      // AboutFlash
+  "PSRAM",                                      // AboutPsram
+  "Pantalla",                                   // AboutDisplay
+  "Táctil",                                     // AboutTouch
+  "Chip de reloj",                              // AboutClockChip
+  "Relés",                                      // AboutRelays
+  "Magnetrón",                                  // AboutMagnetron
+  "LVGL",                                       // AboutLvgl
+  "Núcleo Arduino",                             // AboutCore
+  "relé orig.",                                 // OriginalRelay
+};
+
 static_assert(sizeof(ENGLISH) / sizeof(ENGLISH[0]) == (size_t)Str::Count, "ENGLISH table must match Str");
 static_assert(sizeof(SWEDISH) / sizeof(SWEDISH[0]) == (size_t)Str::Count, "SWEDISH table must match Str");
+static_assert(sizeof(GERMAN) / sizeof(GERMAN[0]) == (size_t)Str::Count, "GERMAN table must match Str");
+static_assert(sizeof(FRENCH) / sizeof(FRENCH[0]) == (size_t)Str::Count, "FRENCH table must match Str");
+static_assert(sizeof(SPANISH) / sizeof(SPANISH[0]) == (size_t)Str::Count, "SPANISH table must match Str");
+
+// Indexed by Language.
+static const char *const *const TABLES[] = { ENGLISH, SWEDISH, GERMAN, FRENCH, SPANISH };
+static const char *const NAMES[] = { "English", "Svenska", "Deutsch", "Français", "Español" };
+static_assert(sizeof(TABLES) / sizeof(TABLES[0]) == (size_t)Language::Count, "TABLES must match Language");
+static_assert(sizeof(NAMES) / sizeof(NAMES[0]) == (size_t)Language::Count, "NAMES must match Language");
 
 const char *tr(Str s) {
-  const char *const *table = settings.language == Language::Swedish ? SWEDISH : ENGLISH;
-  return table[(size_t)s];
+  return TABLES[(size_t)settings.language][(size_t)s];
 }
 
 const char *languageName(uint8_t language) {
-  return language == (uint8_t)Language::Swedish ? "Svenska" : "English";
+  return language < (uint8_t)Language::Count ? NAMES[language] : "?";
 }

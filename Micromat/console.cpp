@@ -3,6 +3,7 @@
 #include "perf.h"
 #include "settings.h"
 #include "wifi_creds.h"
+#include "ui.h"
 
 static const char *HELP =
   "commands: +N / -N (seconds) | t N (set seconds) | p N (power, watts) | start | stop | quick\n"
@@ -62,6 +63,8 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
                card ? "ok" : "MISSING");
     for (uint8_t i = 0; card && i < DebugLog::FILES; i++) Log.printf(", %s %u bytes", DebugLog::fileName(i), (unsigned)Log.fileSize(i));
     Log.println();
+  } else if (cmd.startsWith("texts ")) {
+    uiReportTexts(cmd.substring(6).toInt());
   } else if (cmd == "keygen") {
     Log.println(credsKeyReady() ? "keygen: the encryption key already exists"
                                    : "keygen: burns a random key into an eFuse block. PERMANENT (one of six key "

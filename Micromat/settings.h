@@ -14,7 +14,8 @@ constexpr uint8_t NUM_DIM_DELAY = sizeof(DIM_DELAY_S) / sizeof(DIM_DELAY_S[0]);
 constexpr uint8_t NUM_VOLUME = sizeof(VOLUME_DUTY) / sizeof(VOLUME_DUTY[0]);
 constexpr uint8_t NUM_FAVOURITES = 4;
 
-enum class Language : uint8_t { English, Swedish, Count };
+// Stored in the settings blob: only add new languages before Count.
+enum class Language : uint8_t { English, Swedish, German, French, Spanish, Count };
 
 struct Favourite {
   uint32_t seconds = 0;  // 0 = empty slot

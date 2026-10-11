@@ -16,7 +16,7 @@ Running on the bench, not yet installed in the oven. The panel buttons, encoder,
 - **Menu** (Program button, or tap):
   - **Defrost** by food type and weight, with a "turn the food" beep halfway.
   - **Programs:** fixed presets plus four favourites.
-  - **Settings:** clock, brightness, dimming, sound, language (English / Svenska), Wi-Fi, debug log, firmware update.
+  - **Settings:** clock, brightness, dimming, sound, language (English, Svenska, Deutsch, Français, Español), Wi-Fi, debug log, firmware update.
   - **About:** firmware version and hardware details.
 - **Clock:** a battery-backed real-time clock keeps the time through power cuts. It can also be set over Wi-Fi.
 - **Wi-Fi (optional, off by default):** set up from a phone via the oven's own temporary network and a QR code. The Wi-Fi password is stored encrypted with a key from the chip's eFuses. That key has to be created once, and that step is permanent; see [HARDWARE.md](HARDWARE.md#efuse-key-for-the-wi-fi-password-not-created).
