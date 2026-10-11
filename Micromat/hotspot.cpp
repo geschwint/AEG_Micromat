@@ -1,4 +1,5 @@
 #include "hotspot.h"
+#include "debug_log.h"
 #include <DNSServer.h>
 #include <WiFi.h>
 #include <esp_mac.h>
@@ -29,12 +30,12 @@ void hotspotStart() {
     WiFi.onEvent([](arduino_event_id_t e, arduino_event_info_t info) {
       if (e == ARDUINO_EVENT_WIFI_AP_STACONNECTED) {
         const uint8_t *m = info.wifi_ap_staconnected.mac;
-        Serial.printf("[%7lu] hotspot: device %02x:%02x:%02x:%02x:%02x:%02x joined\n", millis(), m[0], m[1], m[2],
+        Log.printf("[%7lu] hotspot: device %02x:%02x:%02x:%02x:%02x:%02x joined\n", millis(), m[0], m[1], m[2],
                       m[3], m[4], m[5]);
       } else if (e == ARDUINO_EVENT_WIFI_AP_STADISCONNECTED) {
-        Serial.printf("[%7lu] hotspot: device left (reason %u)\n", millis(), info.wifi_ap_stadisconnected.reason);
+        Log.printf("[%7lu] hotspot: device left (reason %u)\n", millis(), info.wifi_ap_stadisconnected.reason);
       } else if (e == ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED) {
-        Serial.printf("[%7lu] hotspot: device got %s\n", millis(),
+        Log.printf("[%7lu] hotspot: device got %s\n", millis(),
                       IPAddress(info.wifi_ap_staipassigned.ip.addr).toString().c_str());
       }
     });
@@ -43,7 +44,7 @@ void hotspotStart() {
   dns.start(53, "*", WiFi.softAPIP());
   stations_ = 0;
   active_ = true;
-  Serial.printf("[%7lu] hotspot \"%s\" %s, %s, MAC %s, channel %d\n", millis(), name_, ok ? "open" : "FAILED TO START",
+  Log.printf("[%7lu] hotspot \"%s\" %s, %s, MAC %s, channel %d\n", millis(), name_, ok ? "open" : "FAILED TO START",
                 WiFi.softAPIP().toString().c_str(), WiFi.softAPmacAddress().c_str(), WiFi.channel());
 }
 
@@ -58,7 +59,7 @@ void hotspotStop() {
   memset(qr_, 0, sizeof(qr_));
   active_ = false;
   stations_ = 0;
-  Serial.printf("[%7lu] hotspot closed, Wi-Fi off\n", millis());
+  Log.printf("[%7lu] hotspot closed, Wi-Fi off\n", millis());
 }
 
 void hotspotUpdate(uint32_t now) {

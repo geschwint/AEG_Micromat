@@ -15,7 +15,8 @@
 // returns; push or Quick start then starts it, as for a manual setting.
 // Settings -> Wi-Fi -> Network opens the Wi-Fi setup screen (wifi_setup.h);
 // Settings -> Firmware update the update screen (fw_update.h; only when idle,
-// and nothing can start cooking while it's open).
+// and nothing can start cooking while it's open); Settings -> Debug log ->
+// Download the same screen for the log files on the SD card.
 #pragma once
 #include <Arduino.h>
 #include "inputs.h"
@@ -25,12 +26,13 @@
 #include "clock.h"
 #include "wifi_time.h"
 #include "ui_text.h"
+#include "config.h"
 
 enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup, Update };
 // Choice lists come last (isChoice() relies on that order).
 enum class MenuId : uint8_t {
-  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi, About,
-  Brightness, DimLevel, DimDelay, KeyClicks, Volume, Language, AutoTime, WifiOn
+  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi, About, DebugLog,
+  Brightness, DimLevel, DimDelay, KeyClicks, Volume, Language, AutoTime, WifiOn, DebugLogOn
 };
 enum class EditId : uint8_t { DefrostWeight, ClockTime };
 
@@ -51,6 +53,7 @@ public:
   Screen screen() const { return screen_; }
   bool dimmed() const { return dimmed_; }
   bool splash() const { return splash_; }  // start-up splash (logo, model, firmware) still showing
+  bool powerView() const;  // the knob just moved: main screen shows the watts big
   uint8_t backlightPercent() const;  // includes the live preview while choosing brightness
   const char *toast() const;         // short message, or nullptr
   enum class Program : uint8_t { None, Defrost, Preset, Favourite };
@@ -73,14 +76,14 @@ public:
 private:
   void use();
   void showToast(Str s, uint32_t ms = 0);
-  void adjustTime(int32_t clicks);
+  void adjustTime(int32_t clicks, uint32_t now);
   void openMenu(MenuId id, uint8_t index = 0);
   void closeMenu();
   void menuBack();
   void menuSelect();
   void openEdit(EditId id);
   void editBack();
-  void loadProgram(Program kind, uint8_t index, uint32_t seconds, uint8_t power, bool rotate);
+  void loadProgram(Program kind, uint8_t index, uint32_t seconds, uint16_t power, bool rotate);
   uint8_t choiceCount(MenuId id) const;
   uint8_t choiceCurrent(MenuId id) const;
   void choiceLabel(MenuId id, uint8_t i, char *buf, size_t len) const;
@@ -92,7 +95,7 @@ private:
   void startWifiSetup();
   void leaveWifiSetup();
   void wifiSetupInput(InputEvent e);
-  void startUpdate();
+  void startUpdate(bool logs = false);  // logs: Settings -> Debug log -> Download
   void leaveUpdate();
   void updateInput(InputEvent e);
   void onTouch(int16_t x, int16_t y);
@@ -118,7 +121,15 @@ private:
   uint16_t programGrams_ = 0;
   uint32_t programSeconds_ = 0;  // as loaded (halfway point for "turn the food")
   bool turnBeeped_ = false;
-  uint8_t potPercent_ = 100;     // power the pot selects (restored when a program ends)
+  uint16_t potWatts_ = MAX_POWER_W;  // power the pot selects (restored when a program ends)
+  bool potSeen_ = false;          // the pot's start-up report has come
+  uint32_t powerViewAt_ = 0;      // last knob change (big watts for POWER_VIEW_MS)
+  bool powerViewOn_ = false;
+
+  // Encoder acceleration (setting the time on the main screen)
+  uint32_t encLastMs_ = 0;
+  int8_t encLastDir_ = 0;
+  float encSpeed_ = 0;            // clicks per second, smoothed
 
   bool dimmed_ = false;
   bool splash_ = true;

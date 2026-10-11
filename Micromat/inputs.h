@@ -15,7 +15,7 @@ enum class InputEvent : uint8_t {
   ProgramHold,  // Program held for SERVICE_HOLD_MS
   EncoderTurn,  // value = clicks, positive = clockwise
   EncoderPush,  // on press
-  PotPower,     // value = power percent; sent when the pot moves into another band (and once at start)
+  PotPower,     // value = power in watts; sent when the pot moves into another band (and once at start)
 };
 
 using InputHandler = void (*)(InputEvent event, int32_t value);

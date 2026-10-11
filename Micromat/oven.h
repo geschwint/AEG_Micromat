@@ -8,9 +8,9 @@
 //                    Paused ---stop---->  Idle
 //
 // The fan runs while cooking. When heating stops (pause, done, clear, or power
-// set to 0 %) it keeps running for FAN_RUNON_MS only after heavy use: at least
+// set to 0 W) it keeps running for FAN_RUNON_MS only after heavy use: at least
 // FAN_RUNON_MIN_HEAT_S of heating in the last FAN_RUNON_WINDOW_S.
-// At 0 % the oven is a plain timer: it counts down and beeps, with every relay off.
+// At 0 W the oven is a plain timer: it counts down and beeps, with every relay off.
 #pragma once
 #include <Arduino.h>
 #include "outputs.h"
@@ -28,7 +28,7 @@ public:
   void addSeconds(int32_t seconds);
   void setSeconds(uint32_t seconds);
   void nextPower();
-  void setPower(uint8_t percent, bool click = true);
+  void setPower(uint16_t watts, bool click = true);  // nearest level
   void start();
   void stop();
   void quickStart();     // start as set; +30 s while cooking; 30 s if nothing set
@@ -40,7 +40,7 @@ public:
   OvenState state() const { return state_; }
   static const char *stateName(OvenState s);
   uint32_t remainingSeconds() const { return (remainingMs_ + 999) / 1000; }
-  uint8_t power() const;  // percent
+  uint16_t power() const;  // watts (POWER_LEVELS)
   bool timerOnly() const { return power() == 0; }
   bool rotate() const { return rotate_; }
   bool fanRunningOn() const;
@@ -56,7 +56,7 @@ private:
 
   OvenState state_ = OvenState::Idle;
   uint32_t remainingMs_ = 0;
-  uint8_t powerIdx_ = 0;  // index into POWER_LEVELS (0 = 100 %)
+  uint8_t powerIdx_ = 0;  // index into POWER_LEVELS (0 = MAX_POWER_W)
   bool rotate_ = true;
   bool doorClosed_ = true;
 

@@ -6,6 +6,7 @@
 // No delay() anywhere in the control path. A loop watchdog restarts the board
 // (all outputs OFF) if loop() ever stalls.
 #include <Arduino_GFX_Library.h>
+#include "debug_log.h"
 #include <Wire.h>
 #include "config.h"
 #include "outputs.h"
@@ -26,7 +27,8 @@
 #include "perf.h"
 #include "touch_cst816.h"
 
-Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_MISO);
+// FSPI: the SD card (debug_log.cpp) shares this bus and must use the same SPI peripheral.
+Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_MISO, FSPI);
 Arduino_GFX *gfx = new Arduino_ST7789(lcdBus, -1 /* no reset pin */, 1 /* landscape */, true /* IPS */, 240, 320);
 
 Outputs outputs;
@@ -57,12 +59,14 @@ static void pumpDuringUpdate() {
 
 void setup() {
   outputs.begin();  // first: every output OFF
+  pinMode(PIN_SD_CS, OUTPUT);  // SD card deselected, so it ignores the display's SPI traffic
+  digitalWrite(PIN_SD_CS, HIGH);
 
   Serial.begin(115200);
   // With no reader on the PC, USB serial writes would otherwise wait up to
   // 100 ms each for buffer space, stalling loop(). Drop the log text instead.
   Serial.setTxTimeoutMs(0);
-  Serial.printf("Micromat controller starting (firmware %s, build %s, %s)\n", FIRMWARE_VERSION,
+  Log.printf("Micromat controller starting (firmware %s, build %s, %s)\n", FIRMWARE_VERSION,
                 FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
 
   loadSettings();  // before anything that uses them (buzzer volume, UI language, ...)
@@ -75,7 +79,8 @@ void setup() {
 
   bool touchOk = touchBegin(Wire, PIN_I2C_SDA, PIN_I2C_SCL, SCREEN_W, SCREEN_H);  // also starts Wire
   rtcClock.begin();
-  Serial.printf("touch %s, RTC %s, door %s\n", touchOk ? "ok" : "FAILED", rtcClock.valid() ? "ok" : "not valid",
+  Log.begin(rtcClock);  // debug log on the SD card, if on in Settings (after the display: shared SPI bus)
+  Log.printf("touch %s, RTC %s, door %s\n", touchOk ? "ok" : "FAILED", rtcClock.valid() ? "ok" : "not valid",
                 door.simulated() ? "simulated" : "sensor");
 
   oven.begin(outputs, buzzer);
@@ -86,7 +91,7 @@ void setup() {
   firmwareUpdate.setProgressHook(pumpDuringUpdate);
 
   enableLoopWDT();
-  Serial.println("ready (send any unknown text for help)");
+  Log.println("ready (send any unknown text for help)");
 }
 
 void loop() {
@@ -113,6 +118,7 @@ void loop() {
   wifiSetup.update(now);               // Wi-Fi setup network + web page, while that screen is open
   firmwareUpdate.update(now);          // firmware update page / OTA, while that screen is open
   firmwareUpdate.confirmIfHealthy(now);  // a new firmware confirms itself after 30 s
+  Log.update(now);                     // debug log: buffered text to the SD card every few seconds
   wifiTime.update(now);                // clock over Wi-Fi (NTP), when enabled
   consoleUpdate(oven, door, rtcClock, outputs, inputs, wifiTime);
   uiUpdate();

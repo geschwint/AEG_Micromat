@@ -10,17 +10,18 @@ Running on the bench, not yet installed in the oven. The panel buttons, encoder,
 
 ## What it does
 
-- **Cooking:** set the time with the encoder (push = start) and the power with the knob (100/80/60/40/20 %, or 0 % = kitchen timer). Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
+- **Cooking:** set the time with the encoder (push = start; it speeds up when turned fast) and the power with the knob in the original oven's steps: 750, 700, 600, 500, 450, 350, 250, 150, 80 W, or 0 W = kitchen timer. Turning the knob shows the watts in large digits for a moment. Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
 - **Safety in software as well:** the magnetron only runs with the door closed and the fan running. All relays are off at power-up, on reset and when the door opens. A watchdog restarts the controller, with everything off, if the software hangs. The fan keeps cooling for 5 minutes after heavy use.
-- **Display:** a 5-second start-up splash with the AEG logo, the oven model and the firmware version; then a large clock when idle, and the remaining time while cooking. It dims after a while, and the panel LEDs turn off with it.
+- **Display:** a 5-second start-up splash with the AEG logo, the oven model and the firmware version; then a large clock when idle, and the remaining time while cooking. It dims after a while to a sleep screen with the red AEG logo and the clock, and the panel LEDs turn off with it.
 - **Menu** (Program button, or tap):
   - **Defrost** by food type and weight, with a "turn the food" beep halfway.
   - **Programs:** fixed presets plus four favourites.
-  - **Settings:** clock, brightness, dimming, sound, language (English / Svenska), Wi-Fi, firmware update.
+  - **Settings:** clock, brightness, dimming, sound, language (English / Svenska), Wi-Fi, debug log, firmware update.
   - **About:** firmware version and hardware details.
 - **Clock:** a battery-backed real-time clock keeps the time through power cuts. It can also be set over Wi-Fi.
 - **Wi-Fi (optional, off by default):** set up from a phone via the oven's own temporary network and a QR code. The Wi-Fi password is stored encrypted with a key from the chip's eFuses. That key has to be created once, and that step is permanent; see [HARDWARE.md](HARDWARE.md#efuse-key-for-the-wi-fi-password-not-created).
 - **Firmware update over Wi-Fi** from a browser, with automatic rollback if the new firmware doesn't start properly.
+- **Debug log (optional):** with a microSD card in the board's slot, Settings → Debug log → Logging writes the log to the card with date and time. Download the files from a phone or PC via Settings → Debug log → Download (the oven's own network and a password, like a firmware update).
 
 ## Hardware
 
@@ -41,7 +42,7 @@ Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
 | `Test_*/` | Small sketches used to bring up each part: display, touch, LVGL, inputs, relays, buzzer, RTC |
 | `Multitask_LAB/` | Early non-blocking multitasking example (Arduino UNO R4) |
 | `tools/build.ps1` | Builds the firmware and saves a stamped image (see below) |
-| `tools/make_logo.ps1` | Turns the logo image into `Micromat/logo_aeg.h` for the start-up splash (run with Windows PowerShell 5.1) |
+| `tools/make_logo.ps1` | Turns the logo image into `Micromat/logo_aeg.h` for the splash and sleep screens (run with Windows PowerShell 5.1) |
 | `config/lv_conf.h` | Copy of the LVGL configuration (see "Setting up") |
 | `PLAN.md` | Decisions, safety principles, architecture, screens, phases |
 | `HARDWARE.md` | Pins, wiring, parts, measurements, eFuse key notes |
@@ -92,4 +93,4 @@ Images in `firmware\` are not committed to git.
 ## Service and testing
 
 - **Service screen:** hold Program for 5 seconds. It shows outputs, door, button voltages, encoder, pot, oven state, clock, loop timing, fan run-on, Wi-Fi and firmware.
-- **Serial console** (USB, 115200 baud): send any unknown text for a list of commands, e.g. `s` for status or `in` for raw input readings.
+- **Serial console** (USB, 115200 baud): send any unknown text for a list of commands, e.g. `s` for status, `in` for raw input readings or `log` for the SD card log.

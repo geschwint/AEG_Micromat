@@ -1,4 +1,5 @@
 #include "outputs.h"
+#include "debug_log.h"
 #include "config.h"
 
 static const uint8_t PINS[OUT_COUNT] = {
@@ -30,7 +31,7 @@ void Outputs::write(Output o, bool on) {
   if (actual_[o] == on) return;
   actual_[o] = on;
   digitalWrite(PINS[o], level(o, on));
-  if (o <= OUT_LAMP) Serial.printf("[%7lu] OUT %-9s %s\n", millis(), name(o), on ? "ON" : "off");
+  if (o <= OUT_LAMP) Log.printf("[%7lu] OUT %-9s %s\n", millis(), name(o), on ? "ON" : "off");
 }
 
 void Outputs::update(uint32_t now, bool doorClosed) {

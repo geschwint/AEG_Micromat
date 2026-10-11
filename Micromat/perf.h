@@ -2,6 +2,7 @@
 // passes exceeded SLOW_US since the last report.
 #pragma once
 #include <Arduino.h>
+#include "debug_log.h"
 
 class LoopStats {
 public:
@@ -16,7 +17,7 @@ public:
   uint32_t maxUs() const { return maxUs_; }
 
   void report() {
-    Serial.printf("[%7lu] PERF %lu loops, slowest %lu us, %lu over %lu ms\n", millis(), (unsigned long)loops_,
+    Log.printf("[%7lu] PERF %lu loops, slowest %lu us, %lu over %lu ms\n", millis(), (unsigned long)loops_,
                   (unsigned long)maxUs_, (unsigned long)slow_, (unsigned long)(SLOW_US / 1000));
     loops_ = maxUs_ = slow_ = 0;
   }

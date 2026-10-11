@@ -1,4 +1,5 @@
 #include "fw_update.h"
+#include "debug_log.h"
 #include "about.h"
 #include <ArduinoOTA.h>
 #include <Update.h>
@@ -19,6 +20,7 @@ static constexpr uint32_t RESTART_DELAY_MS = 3000;            // let the page an
 static constexpr uint32_t HOOK_EVERY_MS = 200;
 static constexpr uint32_t HEALTHY_AFTER_MS = 30000;
 static const char *const HEADING = "Micromat firmware";
+static const char *const HEADING_LOGS = "Micromat debug log";
 
 static WebServer server(80);
 static bool authOk = false;  // the current upload was signed in
@@ -44,7 +46,7 @@ void FirmwareUpdate::transferStart(size_t total) {
   error_[0] = '\0';
   state_ = State::Receiving;
   lastHook_ = 0;
-  Serial.printf("[%7lu] update: receiving %u bytes\n", millis(), (unsigned)total);
+  Log.printf("[%7lu] update: receiving %u bytes\n", millis(), (unsigned)total);
 }
 
 void FirmwareUpdate::transferProgress(size_t done) {
@@ -60,7 +62,7 @@ void FirmwareUpdate::transferDone() {
   state_ = State::Done;
   progress_ = 100;
   restartAt_ = millis() + RESTART_DELAY_MS;
-  Serial.printf("[%7lu] update: installed, restarting in %lu s\n", millis(), RESTART_DELAY_MS / 1000);
+  Log.printf("[%7lu] update: installed, restarting in %lu s\n", millis(), RESTART_DELAY_MS / 1000);
 }
 
 void FirmwareUpdate::transferFailed(const char *why) {
@@ -69,7 +71,7 @@ void FirmwareUpdate::transferFailed(const char *why) {
   state_ = State::Failed;
   enableLoopWDT();
   lastActivity_ = millis();
-  Serial.printf("[%7lu] update FAILED: %s\n", millis(), why);
+  Log.printf("[%7lu] update FAILED: %s\n", millis(), why);
 }
 
 // --- Web page ---------------------------------------------------------------------------------
@@ -82,8 +84,8 @@ void FirmwareUpdate::registerPages() {
   // "captive portal" browsers phones open by themselves can't show that
   // dialog and stay blank). A correct password gives a one-time token in the
   // upload form's address.
-  auto loginPage = [](bool wrong) {
-    String p = htmlStart(HEADING);
+  auto loginPage = [this](bool wrong) {
+    String p = htmlStart(mode_ == Mode::Logs ? HEADING_LOGS : HEADING);
     p += "<p class='dim'>";
     p += tr(Str::PageVersion);
     p += ": ";
@@ -111,13 +113,85 @@ void FirmwareUpdate::registerPages() {
     loginPage(false);
   });
 
-  server.on("/login", HTTP_POST, [this, loginPage]() {
+  // Logs mode: the files on the SD card, each a download link, and a delete
+  // button. The token from the sign-in stays valid until the screen closes.
+  auto logsPage = [this](Str note) {
+    String p = htmlStart(HEADING_LOGS);
+    p += "<p class='dim'>";
+    p += tr(Str::Logging);
+    p += ": ";
+    p += tr(settings.debugLog ? Str::On : Str::Off);
+    p += "</p>";
+    if (note != Str::Count) {
+      p += "<p class='ok'>";
+      p += tr(note);
+      p += "</p>";
+    }
+    if (!Log.cardOk()) {
+      p += "<p class='err'>";
+      p += tr(Str::NoSdCard);
+      p += "</p></body></html>";
+      return server.send(200, "text/html", p);
+    }
+    Log.flushNow();
+    bool any = false;
+    for (uint8_t i = 0; i < DebugLog::FILES; i++) {
+      size_t size = Log.fileSize(i);
+      if (!size) continue;
+      any = true;
+      p += "<label class='n'><a href='/log?t=";
+      p += token_;
+      p += "&f=";
+      p += i;
+      p += "'>";
+      p += DebugLog::fileName(i);
+      p += "</a><span class='r'>";
+      p += (unsigned)((size + 1023) / 1024);
+      p += " kB</span></label>";
+    }
+    if (!any) {
+      p += "<p>";
+      p += tr(Str::PageNoLogs);
+      p += "</p>";
+    } else {
+      p += "<form method='post' action='/delete?t=";
+      p += token_;
+      p += "'><button type='submit'>";
+      p += tr(Str::PageDeleteLogs);
+      p += "</button></form>";
+    }
+    p += "</body></html>";
+    server.send(200, "text/html", p);
+  };
+  auto logsAuthorized = [this]() { return mode_ == Mode::Logs && token_[0] && server.arg("t") == token_; };
+
+  server.on("/log", HTTP_GET, [this, logsAuthorized]() {
+    lastActivity_ = millis();
+    if (!logsAuthorized()) {
+      server.sendHeader("Location", "/");
+      return server.send(302);
+    }
+    sendLogFile(server.arg("f").toInt());
+  });
+
+  server.on("/delete", HTTP_POST, [this, logsAuthorized, logsPage]() {
+    lastActivity_ = millis();
+    if (!logsAuthorized()) {
+      server.sendHeader("Location", "/");
+      return server.send(302);
+    }
+    Log.removeAll();
+    logsPage(Str::PageLogsDeleted);
+  });
+
+  server.on("/login", HTTP_POST, [this, loginPage, logsPage]() {
     lastActivity_ = millis();
     if (server.arg("pw") != hotspotPass()) {
-      Serial.printf("[%7lu] update: wrong password on the page\n", millis());
+      Log.printf("[%7lu] update: wrong password on the page\n", millis());
       return loginPage(true);
     }
     snprintf(token_, sizeof(token_), "%08lx%08lx", (unsigned long)esp_random(), (unsigned long)esp_random());
+    if (mode_ == Mode::Logs) return logsPage(Str::Count);
     String p = htmlStart(HEADING);
     p += "<form method='post' action='/update?t=";
     p += token_;
@@ -165,9 +239,9 @@ void FirmwareUpdate::registerPages() {
     [this]() {
       HTTPUpload &u = server.upload();
       if (u.status == UPLOAD_FILE_START) {
-        authOk = token_[0] && server.arg("t") == token_;
+        authOk = mode_ == Mode::Firmware && token_[0] && server.arg("t") == token_;
         if (!authOk) {
-          Serial.printf("[%7lu] update: upload without a valid sign-in, ignored\n", millis());
+          Log.printf("[%7lu] update: upload without a valid sign-in, ignored\n", millis());
           return;
         }
         token_[0] = '\0';  // one upload per sign-in
@@ -193,9 +267,45 @@ void FirmwareUpdate::registerPages() {
   });
 }
 
+// Streams one log file. This blocks loop() for a few seconds (1 MB), so the
+// loop watchdog is paused and the progress hook keeps the rest going.
+void FirmwareUpdate::sendLogFile(uint8_t i) {
+  Log.flushNow();
+  File f = Log.openFile(i);
+  if (!f) {
+    server.send(404, "text/plain", "not found");
+    return;
+  }
+  size_t size = f.size();
+  Log.printf("[%7lu] logs: sending %s (%u bytes)\n", millis(), DebugLog::fileName(i), (unsigned)size);
+  disableLoopWDT();
+  server.setContentLength(size);
+  server.sendHeader("Content-Disposition", String("attachment; filename=\"") + DebugLog::fileName(i) + "\"");
+  server.send(200, "text/plain; charset=utf-8", "");
+  static uint8_t chunk[2048];
+  size_t sent = 0;
+  uint32_t lastHook = millis();
+  while (sent < size) {
+    int n = f.read(chunk, min(sizeof(chunk), size - sent));
+    if (n <= 0) break;
+    server.sendContent((const char *)chunk, n);
+    if (!server.client().connected()) break;
+    sent += n;
+    if (hook_ && millis() - lastHook >= HOOK_EVERY_MS) {
+      lastHook = millis();
+      hook_();
+    }
+  }
+  f.close();
+  enableLoopWDT();
+  lastActivity_ = millis();
+  Log.printf("[%7lu] logs: sent %u of %u bytes\n", millis(), (unsigned)sent, (unsigned)size);
+}
+
 // --- Control ------------------------------------------------------------------------------------
-void FirmwareUpdate::start() {
+void FirmwareUpdate::start(Mode mode) {
   if (running_) return;
+  mode_ = mode;
   hotspotStart();
   // Also join the home network if one is set up, so the PC can send from there.
   homeIp_[0] = '\0';
@@ -209,7 +319,20 @@ void FirmwareUpdate::start() {
 
   registerPages();
   server.begin();
+  if (mode_ == Mode::Firmware) startOta();
 
+  running_ = true;
+  token_[0] = '\0';
+  state_ = State::Waiting;
+  progress_ = 0;
+  error_[0] = '\0';
+  lastActivity_ = millis();
+  Log.printf("[%7lu] %s: open (running %s, %s)\n", lastActivity_, mode_ == Mode::Logs ? "logs" : "update", version(),
+             runningSlot());
+}
+
+// ArduinoOTA (espota) for network uploads, same password as the page.
+void FirmwareUpdate::startOta() {
   ArduinoOTA.setHostname("micromat");
   ArduinoOTA.setPassword(hotspotPass());
   ArduinoOTA.setRebootOnSuccess(false);  // restart from update(), after showing "done"
@@ -232,14 +355,6 @@ void FirmwareUpdate::start() {
   }
   ArduinoOTA.begin();
   otaStarted_ = true;
-
-  running_ = true;
-  token_[0] = '\0';
-  state_ = State::Waiting;
-  progress_ = 0;
-  error_[0] = '\0';
-  lastActivity_ = millis();
-  Serial.printf("[%7lu] update: open (running %s, %s)\n", lastActivity_, version(), runningSlot());
 }
 
 void FirmwareUpdate::stop() {
@@ -253,23 +368,24 @@ void FirmwareUpdate::stop() {
   homeIp_[0] = '\0';
   if (state_ == State::Waiting || state_ == State::Receiving) state_ = State::Off;
   enableLoopWDT();
-  Serial.printf("[%7lu] update: closed\n", millis());
+  Log.printf("[%7lu] %s: closed\n", millis(), mode_ == Mode::Logs ? "logs" : "update");
 }
 
 void FirmwareUpdate::update(uint32_t now) {
   if (!running_) return;
   hotspotUpdate(now);
   server.handleClient();  // may run a whole upload (blocking, with the progress hook)
-  ArduinoOTA.handle();    // likewise
+  if (otaStarted_) ArduinoOTA.handle();  // likewise
   if (joiningHome_ && WiFi.status() == WL_CONNECTED) {
     joiningHome_ = false;
     strlcpy(homeIp_, WiFi.localIP().toString().c_str(), sizeof(homeIp_));
-    Serial.printf("[%7lu] update: also on the home network at %s\n", now, homeIp_);
+    Log.printf("[%7lu] update: also on the home network at %s\n", now, homeIp_);
   }
   if (hotspotStations() > 0) lastActivity_ = now;
 
   if (state_ == State::Done && (int32_t)(now - restartAt_) >= 0) {
-    Serial.println("update: restarting into the new firmware");
+    Log.println("update: restarting into the new firmware");
+    Log.flushNow();
     Serial.flush();
     ESP.restart();  // relays drop out with the reset (all outputs default off)
   }
@@ -292,7 +408,7 @@ void FirmwareUpdate::confirmIfHealthy(uint32_t now) {
   if (esp_ota_get_state_partition(esp_ota_get_running_partition(), &st) == ESP_OK &&
       st == ESP_OTA_IMG_PENDING_VERIFY) {
     esp_err_t err = esp_ota_mark_app_valid_cancel_rollback();
-    Serial.printf("[%7lu] update: new firmware confirmed (%s)\n", now, esp_err_to_name(err));
+    Log.printf("[%7lu] update: new firmware confirmed (%s)\n", now, esp_err_to_name(err));
   }
 }
 

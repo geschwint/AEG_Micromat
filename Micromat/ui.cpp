@@ -24,14 +24,15 @@ static uint16_t drawBuf[SCREEN_W * 40];  // partial render buffer, 40 lines
 // Colours
 static constexpr uint32_t C_BG = 0x101418, C_DIM_TEXT = 0x9EB3C2, C_WHITE = 0xFFFFFF, C_GREY = 0x607D8B,
                           C_ORANGE = 0xFFA000, C_YELLOW = 0xFFE082, C_GREEN = 0x66BB6A, C_AMBER = 0xFFC107,
-                          C_RED = 0xE53935, C_PANEL = 0x37474F, C_BAR_BG = 0x263238, C_ICE = 0x81D4FA;
+                          C_RED = 0xE53935, C_PANEL = 0x37474F, C_BAR_BG = 0x263238, C_ICE = 0x81D4FA,
+                          C_AEG_RED = 0xDF252C;  // the logo's red
 
 // Views
 static lv_obj_t *mainView, *dimView, *menuView, *editView, *serviceView, *splashView;
 // Main view
 static lv_obj_t *clockLabel, *timeLabel, *subLabel, *toastLabel, *powerBar, *powerLabel, *magOn, *magOff;
 static lv_obj_t *progDefrost, *progPreset, *progFavourite;  // program icons
-// Dimmed view
+// Dimmed (sleep) view: the logo at the top, the clock at the bottom
 static lv_obj_t *dimClock;
 // Menu view (row geometry from app.h, shared with touch hit-testing)
 static lv_obj_t *menuTitle, *menuHighlight, *menuRows[MENU_ROWS], *menuValues[MENU_ROWS], *menuHint;
@@ -246,7 +247,7 @@ static void buildMainView(lv_obj_t *scr) {
   powerBar = lv_bar_create(mainView);
   lv_obj_set_size(powerBar, 288, 28);
   lv_obj_align(powerBar, LV_ALIGN_BOTTOM_MID, 0, -8);
-  lv_bar_set_range(powerBar, 0, 100);
+  lv_bar_set_range(powerBar, 0, MAX_POWER_W);
   lv_obj_set_style_bg_color(powerBar, lv_color_hex(C_BAR_BG), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(powerBar, LV_OPA_COVER, LV_PART_MAIN);
   lv_obj_set_style_bg_color(powerBar, lv_color_hex(C_ORANGE), LV_PART_INDICATOR);
@@ -256,14 +257,22 @@ static void buildMainView(lv_obj_t *scr) {
   lv_obj_center(powerLabel);
 }
 
+// The AEG logo: an alpha mask (A8), drawn in the logo's red on any background.
+static lv_obj_t *makeLogo(lv_obj_t *parent) {
+  lv_obj_t *logo = lv_image_create(parent);
+  lv_image_set_src(logo, &LOGO_AEG);
+  lv_obj_set_style_image_recolor(logo, lv_color_hex(C_AEG_RED), 0);
+  lv_obj_set_style_image_recolor_opa(logo, LV_OPA_COVER, 0);
+  return logo;
+}
+
 // Start-up splash: the AEG logo (white background, like the brand), the oven
 // model and the firmware version/date. Static: built once, never refreshed.
 static void buildSplashView(lv_obj_t *scr) {
   splashView = makeView(scr);
   lv_obj_set_style_bg_color(splashView, lv_color_white(), 0);
   lv_obj_set_style_bg_opa(splashView, LV_OPA_COVER, 0);
-  lv_obj_t *logo = lv_image_create(splashView);
-  lv_image_set_src(logo, &LOGO_AEG);
+  lv_obj_t *logo = makeLogo(splashView);
   lv_obj_align(logo, LV_ALIGN_TOP_MID, 0, 26);
   lv_obj_t *model = makeLabel(splashView, font28, C_BAR_BG);
   lv_label_set_text(model, OVEN_MODEL);
@@ -277,9 +286,11 @@ static void buildSplashView(lv_obj_t *scr) {
 
 static void buildDimView(lv_obj_t *scr) {
   dimView = makeView(scr);
+  lv_obj_t *logo = makeLogo(dimView);
+  lv_obj_align(logo, LV_ALIGN_TOP_MID, 0, 18);
   dimClock = makeBigDigits(dimView);
   setColor(dimClock, C_GREY);
-  lv_obj_center(dimClock);
+  lv_obj_align(dimClock, LV_ALIGN_BOTTOM_MID, 0, 0);
 }
 
 static void buildMenuView(lv_obj_t *scr) {
@@ -405,7 +416,9 @@ static void refreshMain() {
   }
   if (!clockView && r != Busy && now - restSince >= (r == Zero ? ZERO_TO_CLOCK_MS : END_BIG_MS)) clockView = true;
 
-  bool showClockBig = clockView && door_->closed();
+  // Just after the knob moved, the big digits show the power instead.
+  bool powerView = app_->powerView();
+  bool showClockBig = clockView && door_->closed() && !powerView;
   if (showClockBig) setText(clockLabel, "");
   else {
     formatClock(buf, sizeof(buf));
@@ -413,7 +426,10 @@ static void refreshMain() {
   }
 
   uint32_t color;
-  if (!door_->closed()) {
+  if (powerView) {
+    snprintf(buf, sizeof(buf), "%u W", oven_->power());
+    color = C_ORANGE;
+  } else if (!door_->closed()) {
     snprintf(buf, sizeof(buf), "%s", tr(Str::Open));
     color = C_AMBER;
   } else if (clockView) {
@@ -442,7 +458,7 @@ static void refreshMain() {
   } else if (st == OvenState::Done && showClockBig) {
     sub = tr(Str::End);
     subColor = C_GREEN;
-  } else if (!clockView && door_->closed() && app_->programText(program, sizeof(program))) {
+  } else if (!clockView && !powerView && door_->closed() && app_->programText(program, sizeof(program))) {
     sub = program;
     subColor = C_DIM_TEXT;
   }
@@ -454,7 +470,7 @@ static void refreshMain() {
   int32_t power = oven_->power();
   if (lv_bar_get_value(powerBar) != power) lv_bar_set_value(powerBar, power, LV_ANIM_OFF);
   if (oven_->timerOnly()) snprintf(buf, sizeof(buf), "%s", tr(Str::Timer));
-  else snprintf(buf, sizeof(buf), "%ld %%", (long)power);
+  else snprintf(buf, sizeof(buf), "%ld W", (long)power);
   setText(powerLabel, buf);
 }
 
@@ -516,7 +532,8 @@ static void refreshEdit() {
 // QR code + its name/password/address, and what's happening; afterwards only
 // the result.
 static void refreshHotspotView(bool update) {
-  setTitle(wifiTitle, tr(update ? Str::FirmwareUpdate : Str::WifiSetup));
+  bool logs = update && firmwareUpdate.mode() == FirmwareUpdate::Mode::Logs;
+  setTitle(wifiTitle, tr(logs ? Str::DebugLog : update ? Str::FirmwareUpdate : Str::WifiSetup));
   bool open = hotspotActive();
   static char qrShown[64] = "";
   if (open && strcmp(qrShown, hotspotQr()) != 0) {
@@ -604,7 +621,7 @@ static void refreshService() {
   snprintf(buf, sizeof(buf), "Pot: %u mV   Encoder: %ld steps, push %s", inputs_->potMv(),
            (long)inputs_->encoderSteps(), inputs_->pushPressed() ? "down" : "up");
   setText(serviceLines[3], buf);
-  snprintf(buf, sizeof(buf), "Oven: %s  %lu s  %u %%  rotate %s", Oven::stateName(oven_->state()),
+  snprintf(buf, sizeof(buf), "Oven: %s  %lu s  %u W  rotate %s", Oven::stateName(oven_->state()),
            (unsigned long)oven_->remainingSeconds(), oven_->power(), oven_->rotate() ? "on" : "off");
   setText(serviceLines[4], buf);
   if (clock_->valid()) strftime(buf, sizeof(buf), "RTC: %Y-%m-%d %H:%M:%S %Z", &clock_->local());

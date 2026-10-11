@@ -16,7 +16,7 @@ and demo code. Mains assumed 230 V / 50 Hz.
 | 19, 20 | USB D−/D+ (on the header but needed for USB) |
 | 26–37 | Flash / octal PSRAM |
 | 38, 39, 40 | LCD + SD SPI (MOSI, SCLK, MISO) |
-| 41 | SD card CS |
+| 41 | SD card CS (microSD for the debug log; shares the LCD SPI bus; any card up to 32 GB, FAT32) |
 | 42, 45 | LCD DC, LCD CS |
 | 46 | Touch INT (unused so far; could make touch interrupt-driven) |
 
@@ -116,7 +116,7 @@ The original panel buttons are reused: Stop, Quick start, Program, Rotate. The t
 - **Verified:** encoder on GPIO11/12 gives **2 quadrature steps per click**; clockwise = increasing (decoded in a pin-change interrupt). Pot on GPIO2 reads 21–3149 mV across its travel, turning right = higher voltage = more power. Encoder push on GPIO13 verified (after a wiring fix): push = Start, refused with an error beep when no time is set.
 - **Rotary encoder:** EC11 bare or KY-040 module. A KY-040 has 10 kΩ pull-ups to its "+" pin, so power it from **3V3, not 5V**. Add 10 nF to GND on A/B for debounce.
 - **Buttons:** original panel buttons on the resistor ladder (see pin map). Need: how the panel is wired (one wire per button + common, or a scanned matrix?).
-- **LEDs (verified):** panel LEDs on GPIO43 (rotation enabled) and GPIO44 (power = 100 %) with series resistors. GPIO43 may flicker during the boot log (harmless).
+- **LEDs (verified):** panel LEDs on GPIO43 (rotation enabled) and GPIO44 (max power, 750 W) with series resistors. GPIO43 may flicker during the boot log (harmless).
 - **Power pot:** 10 kΩ linear between 3V3 and GND, wiper to GPIO2, 100 nF at the pin. The ESP32 ADC is non-linear near the ends, which is fine for 5–10 power steps.
 
 ### Sound (decided, tested)

@@ -18,12 +18,12 @@ enum class Language : uint8_t { English, Swedish, Count };
 
 struct Favourite {
   uint32_t seconds = 0;  // 0 = empty slot
-  uint8_t power = 100;
+  uint16_t power = 750;  // W (one of POWER_LEVELS)
   bool rotate = true;
 };
 
-// Stored as one blob: bump SETTINGS_KEY in settings.cpp when the layout changes
-// (old data is then ignored and the defaults below apply).
+// Stored as one blob: bump SETTINGS_KEY in settings.cpp when the layout (or
+// the meaning of a field) changes, and carry the old blob over (see migrate*).
 struct Settings {
   uint8_t brightness = 4;  // index into BRIGHTNESS_PCT
   uint8_t dimLevel = 2;    // index into DIM_LEVEL_PCT
@@ -35,6 +35,7 @@ struct Settings {
   bool wifiOn = false;     // master switch: Wi-Fi is never started when off (network: wifi_creds)
   Favourite favourites[NUM_FAVOURITES];
   uint16_t defrostGrams = 500;  // last weight used, the next defrost starts from it
+  bool debugLog = false;   // copy the log to the SD card (debug_log.h)
 };
 
 extern Settings settings;

@@ -97,6 +97,14 @@ enum class Str : uint8_t {
   PageSignIn,
   PageWrongPassword,
   PageBrowserHint,
+  // Debug log (Settings -> Debug log) and its download page
+  DebugLog,
+  Logging,
+  DownloadLogs,
+  NoSdCard,
+  PageNoLogs,
+  PageDeleteLogs,
+  PageLogsDeleted,
   // About page (Menu -> About)
   About,
   AboutFirmware,

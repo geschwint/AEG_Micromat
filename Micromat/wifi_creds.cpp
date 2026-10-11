@@ -1,4 +1,5 @@
 #include "wifi_creds.h"
+#include "debug_log.h"
 #include <Preferences.h>
 #include <WiFi.h>
 #include <esp_efuse.h>
@@ -39,7 +40,7 @@ bool credsCreateKey() {
   if (credsKeyReady()) return true;
   esp_efuse_block_t block = esp_efuse_find_unused_key_block();
   if (block == EFUSE_BLK_KEY_MAX) {
-    Serial.println("keygen: no unused eFuse key block");
+    Log.println("keygen: no unused eFuse key block");
     return false;
   }
   uint8_t key[32];
@@ -47,7 +48,7 @@ bool credsCreateKey() {
   // Also read- and write-protects the block (HMAC keys are never readable).
   esp_err_t err = esp_efuse_write_key(block, ESP_EFUSE_KEY_PURPOSE_HMAC_UP, key, sizeof(key));
   memset(key, 0, sizeof(key));
-  Serial.printf("keygen: eFuse key block %d: %s\n", (int)(block - EFUSE_BLK_KEY0), esp_err_to_name(err));
+  Log.printf("keygen: eFuse key block %d: %s\n", (int)(block - EFUSE_BLK_KEY0), esp_err_to_name(err));
   return err == ESP_OK && credsKeyReady();
 }
 
@@ -63,7 +64,7 @@ void credsBegin() {
   if (p.begin("nvs.net80211", false)) {  // erase anything it saved before
     if (p.isKey("sta.pswd") || p.isKey("sta.ssid")) {
       p.clear();
-      Serial.println("wifi: erased the Wi-Fi driver's stored network");
+      Log.println("wifi: erased the Wi-Fi driver's stored network");
     }
     p.end();
   }
@@ -114,7 +115,7 @@ bool credsSave(const char *ssid, const char *pass) {
   if (n > 0) {
     uint8_t key[32];
     if (!aesKey(key)) {
-      Serial.println("wifi: no eFuse key, password NOT saved (serial: keygen)");
+      Log.println("wifi: no eFuse key, password NOT saved (serial: keygen)");
       return false;
     }
     mbedtls_gcm_context gcm;
@@ -131,7 +132,7 @@ bool credsSave(const char *ssid, const char *pass) {
   bool ok = p.putString(KEY_SSID, ssid) > 0 && p.putBytes(KEY_PASS, &b, sizeof(b)) == sizeof(b);
   p.end();
   if (ok) strlcpy(ssid_, ssid, sizeof(ssid_));
-  Serial.printf("[%7lu] wifi: network \"%s\" %s\n", millis(), ssid, ok ? "saved (password encrypted)" : "SAVE FAILED");
+  Log.printf("[%7lu] wifi: network \"%s\" %s\n", millis(), ssid, ok ? "saved (password encrypted)" : "SAVE FAILED");
   return ok;
 }
 
@@ -142,5 +143,5 @@ void credsForget() {
     p.end();
   }
   ssid_[0] = '\0';
-  Serial.printf("[%7lu] wifi: network forgotten\n", millis());
+  Log.printf("[%7lu] wifi: network forgotten\n", millis());
 }

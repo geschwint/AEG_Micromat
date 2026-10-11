@@ -91,6 +91,13 @@ static const char *const ENGLISH[] = {
   "Sign in",                                    // PageSignIn
   "Wrong password",                             // PageWrongPassword
   "If no file picker opens here, open http://192.168.4.1 in your normal browser (Chrome, Safari).",  // PageBrowserHint
+  "Debug log",                                  // DebugLog
+  "Logging",                                    // Logging
+  "Download",                                   // DownloadLogs
+  "No SD card",                                 // NoSdCard
+  "No log files yet.",                          // PageNoLogs
+  "Delete logs",                                // PageDeleteLogs
+  "Logs deleted.",                              // PageLogsDeleted
   "About",                                      // About
   "Firmware",                                   // AboutFirmware
   "Date",                                       // AboutDate
@@ -206,6 +213,13 @@ static const char *const SWEDISH[] = {
   "Logga in",                                   // PageSignIn
   "Fel lösenord",                               // PageWrongPassword
   "Öppnas ingen filväljare här: öppna http://192.168.4.1 i din vanliga webbläsare (Chrome, Safari).",  // PageBrowserHint
+  "Felsökningslogg",                            // DebugLog
+  "Loggning",                                   // Logging
+  "Ladda ner",                                  // DownloadLogs
+  "Inget SD-kort",                              // NoSdCard
+  "Inga loggfiler än.",                         // PageNoLogs
+  "Radera loggar",                              // PageDeleteLogs
+  "Loggarna är raderade.",                      // PageLogsDeleted
   "Om",                                         // About
   "Programvara",                                // AboutFirmware
   "Datum",                                      // AboutDate

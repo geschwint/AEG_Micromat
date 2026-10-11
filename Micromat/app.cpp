@@ -1,4 +1,5 @@
 #include "app.h"
+#include "debug_log.h"
 #include "config.h"
 #include "programs.h"
 #include "settings.h"
@@ -24,10 +25,11 @@ static const Str ABOUT_ROWS[] = {
   Str::AboutCore,
 };
 static const Str SETTINGS_ROWS[] = { Str::Clock, Str::Brightness, Str::DimLevel, Str::DimDelay, Str::Sound,
-                                     Str::Language, Str::Wifi, Str::FirmwareUpdate };
+                                     Str::Language, Str::Wifi, Str::DebugLog, Str::FirmwareUpdate };
 static const Str CLOCK_ROWS[] = { Str::SetTime, Str::AutoTime };
 static const Str SOUND_ROWS[] = { Str::KeyClicks, Str::Volume };
 static const Str WIFI_ROWS[] = { Str::Wifi, Str::Network, Str::ForgetNetwork };
+static const Str DEBUG_LOG_ROWS[] = { Str::Logging, Str::DownloadLogs };
 template <size_t N> static constexpr uint8_t count(const Str (&)[N]) { return N; }
 
 struct MenuInfo {
@@ -46,6 +48,7 @@ static const MenuInfo MENUS[] = {
   { Str::Sound, MenuId::Settings, 4 },                             // Sound
   { Str::Wifi, MenuId::Settings, 6 },                              // Wifi
   { Str::About, MenuId::Root, 3 },                                 // About
+  { Str::DebugLog, MenuId::Settings, 7 },                          // DebugLog
   { Str::Brightness, MenuId::Settings, 1 },                        // Brightness
   { Str::DimLevel, MenuId::Settings, 2 },                          // DimLevel
   { Str::DimDelay, MenuId::Settings, 3 },                          // DimDelay
@@ -54,8 +57,9 @@ static const MenuInfo MENUS[] = {
   { Str::Language, MenuId::Settings, 5 },                          // Language
   { Str::AutoTime, MenuId::Clock, 1 },                             // AutoTime
   { Str::Wifi, MenuId::Wifi, 0 },                                  // WifiOn
+  { Str::Logging, MenuId::DebugLog, 0 },                           // DebugLogOn
 };
-static_assert(sizeof(MENUS) / sizeof(MENUS[0]) == (size_t)MenuId::WifiOn + 1, "MENUS must match MenuId");
+static_assert(sizeof(MENUS) / sizeof(MENUS[0]) == (size_t)MenuId::DebugLogOn + 1, "MENUS must match MenuId");
 
 static bool isChoice(MenuId id) { return id >= MenuId::Brightness; }
 
@@ -65,12 +69,12 @@ static void formatShort(char *buf, size_t len, uint32_t s) {
   else snprintf(buf, len, "%lu:%02lu", s / 60, s % 60);
 }
 
-// "2:30  80 %" (or "2:30  Timer" at 0 %).
-static void formatSummary(char *buf, size_t len, uint32_t seconds, uint8_t power) {
+// "2:30  600 W" (or "2:30  Timer" at 0 W).
+static void formatSummary(char *buf, size_t len, uint32_t seconds, uint16_t power) {
   char t[12];
   formatShort(t, sizeof(t), seconds);
   if (power == 0) snprintf(buf, len, "%s  %s", t, tr(Str::Timer));
-  else snprintf(buf, len, "%s  %u %%", t, power);
+  else snprintf(buf, len, "%s  %u W", t, power);
 }
 
 // --- Choice lists --------------------------------------------------------------------
@@ -95,6 +99,7 @@ uint8_t App::choiceCurrent(MenuId id) const {
     case MenuId::Language:   return (uint8_t)settings.language;
     case MenuId::AutoTime:   return settings.autoTime ? 0 : 1;
     case MenuId::WifiOn:     return settings.wifiOn ? 0 : 1;
+    case MenuId::DebugLogOn: return settings.debugLog ? 0 : 1;
     default:                 return 0;
   }
 }
@@ -117,7 +122,7 @@ void App::choiceLabel(MenuId id, uint8_t i, char *buf, size_t len) const {
       break;
     }
     case MenuId::Language: snprintf(buf, len, "%s", languageName(i)); break;
-    default: snprintf(buf, len, "%s", tr(i == 0 ? Str::On : Str::Off)); break;  // KeyClicks, AutoTime, WifiOn
+    default: snprintf(buf, len, "%s", tr(i == 0 ? Str::On : Str::Off)); break;  // KeyClicks, AutoTime, WifiOn, DebugLogOn
   }
 }
 
@@ -140,6 +145,13 @@ void App::choiceApply(MenuId id, uint8_t i) {
       settings.wifiOn = i == 0;
       if (!settings.wifiOn) wifi_->cancel();
       else if (credsHaveNetwork()) wifi_->syncNow();
+      break;
+    case MenuId::DebugLogOn:
+      settings.debugLog = i == 0;
+      if (!Log.setEnabled(settings.debugLog)) {  // stays on: logging starts when a card is there at start-up
+        buzzer_->error();
+        showToast(Str::NoSdCard, 4000);
+      }
       break;
     default: break;
   }
@@ -199,6 +211,7 @@ uint8_t App::menuCount() const {
     case MenuId::Clock:         return count(CLOCK_ROWS);
     case MenuId::Sound:         return count(SOUND_ROWS);
     case MenuId::Wifi:          return count(WIFI_ROWS);
+    case MenuId::DebugLog:      return count(DEBUG_LOG_ROWS);
     case MenuId::About:         return count(ABOUT_ROWS);
     default:                    return choiceCount(menuId_);
   }
@@ -234,6 +247,7 @@ void App::menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t v
                  : row == Str::DimDelay   ? MenuId::DimDelay
                  : row == Str::Language   ? MenuId::Language
                  : row == Str::Wifi       ? MenuId::WifiOn
+                 : row == Str::DebugLog   ? MenuId::DebugLogOn
                                           : MenuId::Root;
       if (sub != MenuId::Root) choiceLabel(sub, choiceCurrent(sub), value, valueLen);
       break;
@@ -253,6 +267,10 @@ void App::menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t v
       snprintf(label, labelLen, "%s", tr(WIFI_ROWS[i]));
       if (i == 0) choiceLabel(MenuId::WifiOn, choiceCurrent(MenuId::WifiOn), value, valueLen);
       else if (i == 1) snprintf(value, valueLen, "%s", credsHaveNetwork() ? credsSsid() : tr(Str::NotSet));
+      break;
+    case MenuId::DebugLog:
+      snprintf(label, labelLen, "%s", tr(DEBUG_LOG_ROWS[i]));
+      if (i == 0) choiceLabel(MenuId::DebugLogOn, choiceCurrent(MenuId::DebugLogOn), value, valueLen);
       break;
     case MenuId::About:
       snprintf(label, labelLen, "%s", tr(ABOUT_ROWS[i]));
@@ -311,7 +329,7 @@ void App::begin(Oven &oven, Door &door, Buzzer &buzzer, Clock &clock, WifiTime &
 void App::use() {
   lastUse_ = millis();
   dimRef_ = lastUse_;
-  if (dimmed_) Serial.printf("[%7lu] display awake\n", lastUse_);
+  if (dimmed_) Log.printf("[%7lu] display awake\n", lastUse_);
   dimmed_ = false;
 }
 
@@ -331,6 +349,10 @@ uint8_t App::backlightPercent() const {
   return BRIGHTNESS_PCT[settings.brightness];
 }
 
+bool App::powerView() const {
+  return powerViewOn_;  // cleared in update() after POWER_VIEW_MS
+}
+
 bool App::programText(char *buf, size_t len) const {
   switch (program_) {
     case Program::Defrost:
@@ -342,20 +364,40 @@ bool App::programText(char *buf, size_t len) const {
   }
 }
 
-// Each encoder click moves to the next/previous multiple of a step that grows
-// with the set time (chosen per click, so a fast spin crosses bands correctly).
+// Each encoder step moves to the next/previous multiple of a step that grows
+// with the set time (chosen per step, so a fast spin crosses bands correctly).
 static uint32_t encoderStepSeconds(uint32_t t) {
-  if (t < 60) return 10;
-  if (t < 5 * 60) return 15;
-  if (t < 10 * 60) return 30;
+  if (t < 2 * 60) return 5;
+  if (t < 5 * 60) return 10;
+  if (t < 10 * 60) return 20;
+  if (t < 20 * 60) return 30;
   if (t < 3600) return 60;
   return 300;
 }
 
-void App::adjustTime(int32_t clicks) {
+// Acceleration: the smoothed turning speed gives the steps per click (1 when
+// turning slowly, up to the last ENC_ACCEL_MULT when spinning). A pause or a
+// change of direction starts over at 1.
+void App::adjustTime(int32_t clicks, uint32_t now) {
+  int8_t dir = clicks > 0 ? 1 : -1;
+  uint32_t dt = now - encLastMs_;
+  if (dir != encLastDir_ || dt >= ENC_ACCEL_RESET_MS) {
+    encSpeed_ = 0;
+  } else {
+    float inst = abs(clicks) * 1000.0f / max<uint32_t>(dt, INPUT_POLL_MS);
+    encSpeed_ = encSpeed_ == 0 ? inst : 0.6f * encSpeed_ + 0.4f * inst;
+  }
+  encLastMs_ = now;
+  encLastDir_ = dir;
+  uint8_t mult = 1;
+  for (uint8_t i = 0; i < sizeof(ENC_ACCEL_CPS) / sizeof(ENC_ACCEL_CPS[0]); i++) {
+    if (encSpeed_ >= ENC_ACCEL_CPS[i]) mult = ENC_ACCEL_MULT[i];
+  }
+  int32_t steps = clicks * mult;
+
   uint32_t start = oven_->remainingSeconds();
   uint32_t t = start;
-  for (int32_t i = 0; i < abs(clicks); i++) {
+  for (int32_t i = 0; i < abs(steps); i++) {
     if (clicks > 0) {
       uint32_t step = encoderStepSeconds(t);
       t = t - t % step + step;
@@ -365,8 +407,8 @@ void App::adjustTime(int32_t clicks) {
     }
   }
   if (t > MAX_COOK_SECONDS) t = MAX_COOK_SECONDS;
-  Serial.printf("[%7lu] ENC %+ld click(s): %lu -> %lu s\n", millis(), (long)clicks, (unsigned long)start,
-                (unsigned long)t);
+  Log.printf("[%7lu] ENC %+ld click(s) x%u (%.0f/s): %lu -> %lu s\n", now, (long)clicks, mult, encSpeed_,
+                (unsigned long)start, (unsigned long)t);
   if (t != start) oven_->addSeconds((int32_t)t - (int32_t)start);
 }
 
@@ -374,7 +416,7 @@ void App::adjustTime(int32_t clicks) {
 // Loads time, power and rotate; a paused cook is cleared first. Starting is
 // left to the user (push / Quick start), so the door check and start beep work
 // as usual.
-void App::loadProgram(Program kind, uint8_t index, uint32_t seconds, uint8_t power, bool rotate) {
+void App::loadProgram(Program kind, uint8_t index, uint32_t seconds, uint16_t power, bool rotate) {
   if (oven_->state() == OvenState::Paused) oven_->stop();
   oven_->setSeconds(seconds);
   oven_->setPower(power);
@@ -384,7 +426,7 @@ void App::loadProgram(Program kind, uint8_t index, uint32_t seconds, uint8_t pow
   programGrams_ = grams_;
   programSeconds_ = seconds;
   turnBeeped_ = false;
-  Serial.printf("[%7lu] program loaded: %lu s, %u %%\n", millis(), (unsigned long)seconds, power);
+  Log.printf("[%7lu] program loaded: %lu s, %u W\n", millis(), (unsigned long)seconds, power);
   screen_ = Screen::Main;
 }
 
@@ -470,6 +512,7 @@ void App::menuSelect() {
                  : row == Str::DimDelay     ? MenuId::DimDelay
                  : row == Str::Sound        ? MenuId::Sound
                  : row == Str::Wifi         ? MenuId::Wifi
+                 : row == Str::DebugLog     ? MenuId::DebugLog
                                             : MenuId::Language;
       openMenu(sub, isChoice(sub) ? choiceCurrent(sub) : 0);
       break;
@@ -483,6 +526,10 @@ void App::menuSelect() {
       openMenu(sub, choiceCurrent(sub));
       break;
     }
+    case MenuId::DebugLog:
+      if (i == 0) openMenu(MenuId::DebugLogOn, choiceCurrent(MenuId::DebugLogOn));
+      else startUpdate(true);
+      break;
     case MenuId::Wifi:
       if (i == 0) {
         openMenu(MenuId::WifiOn, choiceCurrent(MenuId::WifiOn));
@@ -526,7 +573,7 @@ void App::leaveWifiSetup() {
 // --- Firmware update screen ------------------------------------------------------------------
 // Only from Idle/Done (a paused cook must be cleared first). While the screen
 // is open nothing starts cooking: Quick start and push are not passed on.
-void App::startUpdate() {
+void App::startUpdate(bool logs) {
   OvenState st = oven_->state();
   if (st == OvenState::Cooking || st == OvenState::Paused) {
     buzzer_->error();
@@ -534,14 +581,15 @@ void App::startUpdate() {
     return;
   }
   wifi_->cancel();  // the update needs the radio
-  firmwareUpdate.start();
+  firmwareUpdate.start(logs ? FirmwareUpdate::Mode::Logs : FirmwareUpdate::Mode::Firmware);
   screen_ = Screen::Update;
   buzzer_->click();
 }
 
 void App::leaveUpdate() {
   firmwareUpdate.stop();
-  openMenu(MenuId::Settings, count(SETTINGS_ROWS) - 1);
+  if (firmwareUpdate.mode() == FirmwareUpdate::Mode::Logs) openMenu(MenuId::DebugLog, 1);
+  else openMenu(MenuId::Settings, count(SETTINGS_ROWS) - 1);
 }
 
 void App::updateInput(InputEvent e) {
@@ -618,7 +666,7 @@ void App::editInput(InputEvent e, int32_t value) {
         buzzer_->click();
       } else {
         bool ok = clock_->setLocalTime(hour_, minute_);
-        Serial.printf("[%7lu] clock set to %02u:%02u %s\n", millis(), hour_, minute_, ok ? "OK" : "FAILED");
+        Log.printf("[%7lu] clock set to %02u:%02u %s\n", millis(), hour_, minute_, ok ? "OK" : "FAILED");
         if (ok) {
           buzzer_->click();
           showToast(Str::Saved);
@@ -642,18 +690,25 @@ void App::editInput(InputEvent e, int32_t value) {
 // --- Input handling ----------------------------------------------------------------------
 void App::onInput(InputEvent e, int32_t value) {
   if (e == InputEvent::PotPower) {  // the pot is a direct control on every screen
-    if (!splash_) use();  // (its first report comes at start-up: that mustn't end the splash)
-    potPercent_ = value;
+    // Its first report comes at start-up: that mustn't end the splash or show the watts.
+    if (potSeen_ && !splash_) {
+      use();
+      powerViewAt_ = millis();
+      powerViewOn_ = true;
+    }
+    potSeen_ = true;
+    potWatts_ = value;
     oven_->setPower(value);
     return;
   }
+  powerViewOn_ = false;  // any other input: the big digits show the time again at once
   // Like waking from dimmed: the encoder only ends the splash; buttons end it and act.
   bool wakeOnly = dimmed_ || splash_;
   splash_ = false;
   use();
   if (wakeOnly && (e == InputEvent::EncoderTurn || e == InputEvent::EncoderPush)) return;
   if (e == InputEvent::ProgramHold) {
-    Serial.printf("[%7lu] service screen\n", millis());
+    Log.printf("[%7lu] service screen\n", millis());
     buzzer_->click();
     if (screen_ == Screen::WifiSetup) wifiSetup.stop();
     if (screen_ == Screen::Update) {
@@ -676,7 +731,7 @@ void App::onInput(InputEvent e, int32_t value) {
 
 void App::mainInput(InputEvent e, int32_t value) {
   switch (e) {
-    case InputEvent::EncoderTurn: adjustTime(value); break;
+    case InputEvent::EncoderTurn: adjustTime(value, millis()); break;
     case InputEvent::EncoderPush: oven_->start(); break;
     case InputEvent::Stop:        oven_->stop(); break;
     case InputEvent::QuickStart:  oven_->quickStart(); break;
@@ -737,7 +792,7 @@ void App::onTouch(int16_t x, int16_t y) {
     if (y >= MENU_ROW_Y0 + MENU_ROWS * MENU_ROW_H) return;  // hint area
     uint8_t i = menuFirstVisible() + (y - MENU_ROW_Y0) / MENU_ROW_H;
     if (i >= menuCount()) return;
-    Serial.printf("[%7lu] touch menu row %u at %d,%d\n", millis(), i, x, y);
+    Log.printf("[%7lu] touch menu row %u at %d,%d\n", millis(), i, x, y);
     menuIndex_ = i;
     menuSelect();
   } else if (screen_ == Screen::Edit) {
@@ -764,6 +819,7 @@ void App::update(uint32_t now) {
     if (t.pressed && !touchDown_) {
       touchDown_ = true;
       bool wakeOnly = dimmed_ || splash_;  // a touch only ends the splash / wakes
+      powerViewOn_ = false;
       splash_ = false;
       use();
       if (!wakeOnly) onTouch(t.x, t.y);
@@ -774,6 +830,7 @@ void App::update(uint32_t now) {
 
   // The splash ends after SPLASH_MS (or earlier on any input or change below).
   if (splash_ && now - splashStart_ >= SPLASH_MS) splash_ = false;
+  if (powerViewOn_ && (int32_t)(now - powerViewAt_) >= (int32_t)POWER_VIEW_MS) powerViewOn_ = false;
 
   // Door and oven state changes count as use and bring the main screen back.
   if (door_->closed() != lastDoorClosed_) {
@@ -798,17 +855,17 @@ void App::update(uint32_t now) {
     turnBeeped_ = true;
     buzzer_->beep(2, 150, 150);
     showToast(Str::TurnFood, TURN_TOAST_MS);
-    Serial.printf("[%7lu] defrost halfway: turn the food\n", now);
+    Log.printf("[%7lu] defrost halfway: turn the food\n", now);
   }
   if (program_ != Program::None &&
       (st == OvenState::Done || (st == OvenState::Idle && oven_->remainingSeconds() == 0))) {
     program_ = Program::None;
-    if (oven_->power() != potPercent_) oven_->setPower(potPercent_, false);
+    if (oven_->power() != potWatts_) oven_->setPower(potWatts_, false);
   }
 
   uint32_t t = millis();
   if ((screen_ == Screen::Menu || screen_ == Screen::Edit) && t - lastUse_ > MENU_TIMEOUT_MS) {
-    Serial.printf("[%7lu] menu timeout\n", t);
+    Log.printf("[%7lu] menu timeout\n", t);
     closeMenu();
   }
   // The setup screen stays while its network is open (it has its own timeout),
@@ -828,6 +885,6 @@ void App::update(uint32_t now) {
   if (!mayDim) dimRef_ = t;
   if (mayDim && !dimmed_ && t - dimRef_ > dimAfterMs) {
     dimmed_ = true;
-    Serial.printf("[%7lu] display dimmed\n", t);
+    Log.printf("[%7lu] display dimmed\n", t);
   }
 }

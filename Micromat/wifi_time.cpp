@@ -1,4 +1,5 @@
 #include "wifi_time.h"
+#include "debug_log.h"
 #include <WiFi.h>
 #include <esp_sntp.h>
 #include "config.h"
@@ -42,10 +43,10 @@ void WifiTime::update(uint32_t now) {
     if (!credsPassword(pass, sizeof(pass))) {
       nextTry_ = now + RETRY_MS;
       snprintf(status_, sizeof(status_), "can't read password");
-      Serial.printf("[%7lu] wifi: %s, retry in 10 min\n", now, status_);
+      Log.printf("[%7lu] wifi: %s, retry in 10 min\n", now, status_);
       return;
     }
-    Serial.printf("[%7lu] wifi: connecting to \"%s\"\n", now, credsSsid());
+    Log.printf("[%7lu] wifi: connecting to \"%s\"\n", now, credsSsid());
     WiFi.mode(WIFI_STA);
     WiFi.begin(credsSsid(), pass);
     memset(pass, 0, sizeof(pass));
@@ -60,7 +61,7 @@ void WifiTime::update(uint32_t now) {
   }
   if (phase_ == Phase::Connecting) {
     if (WiFi.status() == WL_CONNECTED) {
-      Serial.printf("[%7lu] wifi: connected, asking NTP\n", now);
+      Log.printf("[%7lu] wifi: connected, asking NTP\n", now);
       sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
       configTzTime(LOCAL_TZ, "pool.ntp.org", "time.google.com");
       phase_ = Phase::WaitNtp;
@@ -93,5 +94,5 @@ void WifiTime::finish(uint32_t now, bool ok, const char *why) {
   } else {
     snprintf(status_, sizeof(status_), "%s, retry in 10 min", why);
   }
-  Serial.printf("[%7lu] wifi: %s, Wi-Fi off\n", now, status_);
+  Log.printf("[%7lu] wifi: %s, Wi-Fi off\n", now, status_);
 }

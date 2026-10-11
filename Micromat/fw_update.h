@@ -17,20 +17,27 @@
 // in this core). confirmIfHealthy() marks it valid after HEALTHY_AFTER_MS of
 // normal running; if it crashes or hangs before that, the next reset goes back
 // to the previous firmware.
+//
+// The same screen and page, opened from Settings -> Debug log -> Download
+// (Mode::Logs), offer the debug log files on the SD card instead (download,
+// delete; debug_log.h). There is no firmware upload or ArduinoOTA then, and
+// a sign-in stays valid until the screen closes.
 #pragma once
 #include <Arduino.h>
 
 class FirmwareUpdate {
 public:
   enum class State : uint8_t { Off, Waiting, Receiving, Done, Failed, TimedOut };
+  enum class Mode : uint8_t { Firmware, Logs };
 
-  void start();
+  void start(Mode mode = Mode::Firmware);
   void stop();
   void update(uint32_t now);
   void setProgressHook(void (*hook)()) { hook_ = hook; }  // runs during the blocking transfer
   void confirmIfHealthy(uint32_t now);                    // call every loop()
 
   bool active() const { return running_; }
+  Mode mode() const { return mode_; }
   State state() const { return state_; }
   uint8_t progress() const { return progress_; }  // percent while receiving
   const char *error() const { return error_; }
@@ -46,8 +53,11 @@ public:
 
 private:
   void registerPages();
+  void sendLogFile(uint8_t i);
+  void startOta();
 
   bool running_ = false;
+  Mode mode_ = Mode::Firmware;
   State state_ = State::Off;
   uint8_t progress_ = 0;
   size_t total_ = 0;
@@ -58,7 +68,7 @@ private:
   bool otaStarted_ = false;
   char homeIp_[16] = "";
   char error_[40] = "";
-  char token_[17] = "";  // one-time upload token after a correct sign-in
+  char token_[17] = "";  // after a correct sign-in: one upload (Firmware) or until closed (Logs)
   void (*hook_)() = nullptr;
 };
 

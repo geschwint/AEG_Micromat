@@ -1,7 +1,8 @@
 #include "oven.h"
+#include "debug_log.h"
 #include "config.h"
 
-uint8_t Oven::power() const { return POWER_LEVELS[powerIdx_]; }
+uint16_t Oven::power() const { return POWER_LEVELS[powerIdx_]; }
 
 const char *Oven::stateName(OvenState s) {
   switch (s) {
@@ -23,7 +24,7 @@ void Oven::setState(OvenState s) {
   if (s == state_) return;
   uint32_t now = millis();
   if (s == OvenState::Cooking) cookStart_ = now;
-  Serial.printf("[%7lu] STATE %s -> %s  (%lu s left, %u %%)\n", now, stateName(state_), stateName(s),
+  Log.printf("[%7lu] STATE %s -> %s  (%lu s left, %u W)\n", now, stateName(state_), stateName(s),
                 (unsigned long)remainingSeconds(), power());
   state_ = s;
 }
@@ -32,15 +33,15 @@ bool Oven::fanRunningOn() const {
   return runOn_ && (int32_t)(runOnUntil_ - millis()) > 0;
 }
 
-// Power control: the magnetron is on for power% of each DUTY_PERIOD_MS. The
+// Power control: the magnetron is on for watts / MAX_POWER_W of each DUTY_PERIOD_MS. The
 // cycle starts after the fan lead time, so the first on-period isn't shortened.
 bool Oven::magnetronWanted(uint32_t now) const {
   if (state_ != OvenState::Cooking || timerOnly()) return false;
   uint32_t since = now - cookStart_;
   if (since < FAN_LEAD_MS) return false;
-  if (power() >= 100) return true;
+  if (power() >= MAX_POWER_W) return true;
   uint32_t phase = (since - FAN_LEAD_MS) % DUTY_PERIOD_MS;
-  return phase < DUTY_PERIOD_MS * power() / 100;
+  return phase < DUTY_PERIOD_MS * power() / MAX_POWER_W;
 }
 
 void Oven::update(uint32_t now, bool doorClosed) {
@@ -56,7 +57,7 @@ void Oven::update(uint32_t now, bool doorClosed) {
     }
   }
   // "Heating" = cooking with power > 0. When it ends for any reason (pause,
-  // done, clear, or power turned to 0 %) the fan keeps cooling for FAN_RUNON_MS,
+  // done, clear, or power turned to 0 W) the fan keeps cooling for FAN_RUNON_MS,
   // but only after heavy use (see oven.h).
   bool heating = state_ == OvenState::Cooking && !timerOnly();
   recordHeat(now, heating);
@@ -65,13 +66,13 @@ void Oven::update(uint32_t now, bool doorClosed) {
   } else if (heating_) {
     runOn_ = heatCount_ >= FAN_RUNON_MIN_HEAT_S;
     runOnUntil_ = now + FAN_RUNON_MS;
-    Serial.printf("[%7lu] heated %u s of the last %u s: %s\n", now, heatCount_, FAN_RUNON_WINDOW_S,
+    Log.printf("[%7lu] heated %u s of the last %u s: %s\n", now, heatCount_, FAN_RUNON_WINDOW_S,
                   runOn_ ? "fan run-on" : "no fan run-on");
   }
   heating_ = heating;
   if (runOn_ && (int32_t)(runOnUntil_ - now) <= 0) {
     runOn_ = false;
-    Serial.printf("[%7lu] fan run-on finished\n", now);
+    Log.printf("[%7lu] fan run-on finished\n", now);
   }
 
   bool doorLamp = !doorClosed_ && (now - doorOpenedAt_ < LAMP_DOOR_MS);
@@ -80,7 +81,7 @@ void Oven::update(uint32_t now, bool doorClosed) {
   out_->request(OUT_TURNTABLE, heating && rotate_);
   out_->request(OUT_LAMP, heating || doorLamp);
   out_->request(OUT_LED_ROTATE, rotate_);
-  out_->request(OUT_LED_MAXPOWER, power() >= 100);
+  out_->request(OUT_LED_MAXPOWER, power() >= MAX_POWER_W);
 }
 
 // One bit per second in a ring buffer covering FAN_RUNON_WINDOW_S; heatCount_
@@ -126,25 +127,25 @@ void Oven::setSeconds(uint32_t seconds) {
 
 void Oven::nextPower() {
   powerIdx_ = (powerIdx_ + 1) % NUM_POWER_LEVELS;
-  Serial.printf("[%7lu] power %u %%\n", millis(), power());
+  Log.printf("[%7lu] power %u W\n", millis(), power());
   buzzer_->click();
 }
 
-void Oven::setPower(uint8_t percent, bool click) {
+void Oven::setPower(uint16_t watts, bool click) {
   // Pick the closest available level.
   uint8_t best = 0;
   for (uint8_t i = 1; i < NUM_POWER_LEVELS; i++) {
-    if (abs((int)POWER_LEVELS[i] - percent) < abs((int)POWER_LEVELS[best] - percent)) best = i;
+    if (abs((int)POWER_LEVELS[i] - watts) < abs((int)POWER_LEVELS[best] - watts)) best = i;
   }
   powerIdx_ = best;
-  Serial.printf("[%7lu] power %u %%\n", millis(), power());
+  Log.printf("[%7lu] power %u W\n", millis(), power());
   if (click) buzzer_->click();
 }
 
 void Oven::start() {
   if (state_ == OvenState::Cooking) return;
   if (!doorClosed_ || remainingMs_ == 0) {
-    Serial.printf("[%7lu] start refused: %s\n", millis(), !doorClosed_ ? "door open" : "no time set");
+    Log.printf("[%7lu] start refused: %s\n", millis(), !doorClosed_ ? "door open" : "no time set");
     buzzer_->error();
     return;
   }
@@ -176,7 +177,7 @@ void Oven::quickStart() {
 
 void Oven::toggleRotate() {
   rotate_ = !rotate_;
-  Serial.printf("[%7lu] rotate %s\n", millis(), rotate_ ? "on" : "off");
+  Log.printf("[%7lu] rotate %s\n", millis(), rotate_ ? "on" : "off");
   buzzer_->click();
 }
 
@@ -184,7 +185,7 @@ void Oven::toggleRotate() {
 // timeout (now - doorOpenedAt_) never goes negative.
 void Oven::doorChanged(bool closed, uint32_t now) {
   doorClosed_ = closed;
-  Serial.printf("[%7lu] door %s\n", now, closed ? "closed" : "OPEN");
+  Log.printf("[%7lu] door %s\n", now, closed ? "closed" : "OPEN");
   if (!closed) {
     doorOpenedAt_ = now;
     if (state_ == OvenState::Cooking) setState(OvenState::Paused);

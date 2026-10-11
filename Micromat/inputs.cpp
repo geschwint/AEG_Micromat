@@ -1,4 +1,5 @@
 #include "inputs.h"
+#include "debug_log.h"
 #include "config.h"
 
 // --- Encoder (interrupt) -------------------------------------------------------
@@ -57,7 +58,7 @@ PanelKey Inputs::decodeLadder(uint16_t mv) const {
 
 // Act on a ladder key press (Program only starts its hold timer; it acts on release).
 void Inputs::pressKey(PanelKey k, uint32_t now, bool corrected) {
-  Serial.printf("[%7lu] KEY %s (%u mV)%s\n", now, keyName(k), pressMinMv_, corrected ? " - corrected" : "");
+  Log.printf("[%7lu] KEY %s (%u mV)%s\n", now, keyName(k), pressMinMv_, corrected ? " - corrected" : "");
   pressKey_ = k;
   switch (k) {
     case PanelKey::Stop:       emit(InputEvent::Stop); break;
@@ -75,7 +76,7 @@ void Inputs::pressKey(PanelKey k, uint32_t now, bool corrected) {
 uint8_t Inputs::potLevel(uint16_t mv) const {
   const uint16_t full = 3150;
   uint8_t band = (uint32_t)min(mv, (uint16_t)(full - 1)) * NUM_POWER_LEVELS / full;  // 0 = left
-  return NUM_POWER_LEVELS - 1 - band;  // POWER_LEVELS[0] is 100 %, so invert
+  return NUM_POWER_LEVELS - 1 - band;  // POWER_LEVELS[0] is the highest, so invert
 }
 
 void Inputs::update(uint32_t now) {
@@ -103,7 +104,7 @@ void Inputs::update(uint32_t now) {
     if (keyStable_ == PanelKey::None) {  // released
       if (pressKey_ == PanelKey::None && pending_ != PanelKey::None) pressKey(pending_, now, false);  // short tap
       if (pressKey_ == PanelKey::Program && !holdFired_) emit(InputEvent::Program);
-      Serial.printf("[%7lu] KEY released (lowest %u mV)\n", now, pressMinMv_);
+      Log.printf("[%7lu] KEY released (lowest %u mV)\n", now, pressMinMv_);
       pending_ = pressKey_ = PanelKey::None;
       pressMinMv_ = 0;
     } else if (pressKey_ == PanelKey::None) {  // settling: keep the lowest
@@ -133,7 +134,7 @@ void Inputs::update(uint32_t now) {
   if (swCount_ == INPUT_STABLE_COUNT && swCandidate_ != swStable_) {
     swStable_ = swCandidate_;
     if (swStable_) {
-      Serial.printf("[%7lu] KEY encoder push\n", now);
+      Log.printf("[%7lu] KEY encoder push\n", now);
       emit(InputEvent::EncoderPush);
     }
   }
@@ -153,13 +154,13 @@ void Inputs::update(uint32_t now) {
   if (first || (lvl != potLevelIdx_ && abs((int)potMv_ - (int)potLevelMv_) > POT_HYSTERESIS_MV)) {
     potLevelIdx_ = lvl;
     potLevelMv_ = potMv_;
-    if (!first) Serial.printf("[%7lu] POT %u mV -> power %u %%\n", now, potMv_, POWER_LEVELS[lvl]);
+    if (!first) Log.printf("[%7lu] POT %u mV -> power %u W\n", now, potMv_, POWER_LEVELS[lvl]);
     emit(InputEvent::PotPower, POWER_LEVELS[lvl]);
   }
 }
 
 void Inputs::printRaw() const {
-  Serial.printf("          inputs: ladder %u mV (%s), pot %u mV, encoder %ld steps, push %s\n", ladderMv_,
+  Log.printf("          inputs: ladder %u mV (%s), pot %u mV, encoder %ld steps, push %s\n", ladderMv_,
                 keyName(decodeLadder(ladderMv_)), potMv_, (long)encoderSteps(),
                 digitalRead(PIN_ENC_SW) == LOW ? "pressed" : "released");
 }

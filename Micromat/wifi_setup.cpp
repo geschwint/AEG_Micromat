@@ -1,4 +1,5 @@
 #include "wifi_setup.h"
+#include "debug_log.h"
 #include <WebServer.h>
 #include <WiFi.h>
 #include "hotspot.h"
@@ -67,7 +68,7 @@ void WifiSetup::start() {
   running_ = true;
   state_ = State::Waiting;
   lastActivity_ = millis();
-  Serial.printf("[%7lu] wifi setup: open\n", lastActivity_);
+  Log.printf("[%7lu] wifi setup: open\n", lastActivity_);
 }
 
 // Handlers are registered once (WebServer keeps them across stop/begin).
@@ -145,7 +146,7 @@ void WifiSetup::registerPages() {
         state_ != State::Testing && state_ != State::Success) {
       strlcpy(testSsid_, ssid.c_str(), sizeof(testSsid_));
       strlcpy(testPass_, pass.c_str(), sizeof(testPass_));
-      Serial.printf("[%7lu] wifi setup: testing \"%s\"\n", millis(), testSsid_);
+      Log.printf("[%7lu] wifi setup: testing \"%s\"\n", millis(), testSsid_);
       WiFi.begin(testSsid_, testPass_);
       state_ = State::Testing;
       testStart_ = millis();
@@ -181,7 +182,7 @@ void WifiSetup::stop() {
   running_ = false;
   scanning_ = false;
   if (state_ == State::Waiting || state_ == State::Testing) state_ = State::Off;
-  Serial.printf("[%7lu] wifi setup: closed\n", millis());
+  Log.printf("[%7lu] wifi setup: closed\n", millis());
 }
 
 bool WifiSetup::phoneConnected() const { return running_ && hotspotStations() > 0; }
@@ -190,7 +191,7 @@ void WifiSetup::finishTest(State result) {
   WiFi.disconnect(false);  // station side only; the setup network stays
   memset(testPass_, 0, sizeof(testPass_));
   state_ = result;
-  Serial.printf("[%7lu] wifi setup: \"%s\" %s\n", millis(), testSsid_,
+  Log.printf("[%7lu] wifi setup: \"%s\" %s\n", millis(), testSsid_,
                 result == State::Success ? "connected, saved" : "failed");
 }
 

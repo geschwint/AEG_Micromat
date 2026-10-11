@@ -41,6 +41,12 @@ constexpr uint8_t  INPUT_STABLE_COUNT  = 3;   // identical polls before a button
 constexpr uint32_t LADDER_SETTLE_MS    = 60;
 constexpr int8_t   ENC_STEPS_PER_DETENT = 2;  // measured: 2 quadrature steps per click
 constexpr int8_t   ENC_DIRECTION        = 1;  // set to -1 if clockwise decreases the time
+// Encoder acceleration when setting the time: the turning speed (clicks per
+// second, smoothed) gives a multiplier for the steps per click. Slow turning
+// is always one step per click.
+constexpr uint16_t ENC_ACCEL_CPS[]  = { 8, 14, 22 };  // speed thresholds
+constexpr uint8_t  ENC_ACCEL_MULT[] = { 2, 3, 5 };    // steps per click above each threshold
+constexpr uint32_t ENC_ACCEL_RESET_MS = 200;          // a pause this long starts over at one step
 constexpr uint16_t POT_HYSTERESIS_MV    = 80;
 
 // --- Onboard (Waveshare ESP32-S3-Touch-LCD-2) ---------------------------------
@@ -50,6 +56,7 @@ constexpr uint8_t PIN_LCD_MISO = 40;
 constexpr uint8_t PIN_LCD_DC   = 42;
 constexpr uint8_t PIN_LCD_CS   = 45;
 constexpr uint8_t PIN_LCD_BL   = 1;
+constexpr uint8_t PIN_SD_CS    = 41;  // microSD card, on the LCD's SPI bus
 constexpr uint8_t PIN_I2C_SDA  = 48;  // touch 0x15, IMU 0x6B, RTC 0x51
 constexpr uint8_t PIN_I2C_SCL  = 47;
 
@@ -65,11 +72,22 @@ constexpr bool SIMULATE_DOOR = false;
 
 // --- Cooking ------------------------------------------------------------------
 constexpr uint32_t MAX_COOK_SECONDS = 9 * 3600 + 59 * 60 + 59;  // 9:59:59 (one-digit hour)
-// Percent. 0 % = timer only: counts down and beeps, no relays at all.
-constexpr uint8_t POWER_LEVELS[] = { 100, 80, 60, 40, 20, 0 };
+// Watts, as the original oven's knob (manual), highest first. 0 W = timer
+// only: counts down and beeps, no relays at all.
+constexpr uint16_t POWER_LEVELS[] = { 750, 700, 600, 500, 450, 350, 250, 150, 80, 0 };
 constexpr uint8_t NUM_POWER_LEVELS = sizeof(POWER_LEVELS) / sizeof(POWER_LEVELS[0]);
-// Magnetron power is on/off only: power % = share of this period with the magnetron on.
+constexpr uint16_t MAX_POWER_W = POWER_LEVELS[0];
+// Magnetron power is on/off only: watts / MAX_POWER_W = share of this period with the magnetron on.
 constexpr uint32_t DUTY_PERIOD_MS = 24000;
+
+// The level closest to `watts` (ties: the higher one).
+inline uint16_t nearestPowerW(int32_t watts) {
+  uint16_t best = POWER_LEVELS[0];
+  for (uint16_t w : POWER_LEVELS) {
+    if (abs(w - watts) < abs(best - watts)) best = w;
+  }
+  return best;
+}
 
 // --- Safety / timing ----------------------------------------------------------
 constexpr uint32_t FAN_LEAD_MS     = 1000;    // fan must run this long before the magnetron may start
@@ -89,9 +107,17 @@ constexpr uint32_t SERVICE_HOLD_MS  = 5000;    // hold Program this long for the
 constexpr uint32_t TOAST_MS         = 2000;    // short on-screen messages
 constexpr uint32_t ZERO_TO_CLOCK_MS = 10000;   // timer at 00:00 this long -> clock view
 constexpr uint32_t SPLASH_MS = 5000;           // start-up splash (logo, model, firmware); any input ends it
+constexpr uint32_t POWER_VIEW_MS    = 1000;    // big watts on the main screen after the knob last moved
 constexpr uint32_t END_BIG_MS       = 10000;   // large "End" this long -> clock view (small "End")
 constexpr uint32_t TOUCH_POLL_MS    = 30;
 constexpr int32_t BIG_DIGIT_PX      = 77;      // big digit font size (Tiny TTF)
+
+// --- Debug log on the SD card (debug_log.h) -----------------------------------
+constexpr uint32_t LOG_FLUSH_MS    = 5000;             // buffered text goes to the card this often
+constexpr size_t   LOG_BUF_BYTES   = 32768;            // RAM buffer (PSRAM)
+constexpr size_t   LOG_CHUNK_BYTES = 4096;             // at most this much per loop() pass
+constexpr size_t   LOG_FILE_MAX    = 1024UL * 1024;    // then the file rolls over (two are kept)
+constexpr uint32_t LOG_SD_HZ       = 20000000;         // SPI clock for the card
 
 // --- Sound --------------------------------------------------------------------
 constexpr uint16_t BEEP_FREQ_HZ = 2700;  // buzzer is loudest around 2.5-3 kHz
