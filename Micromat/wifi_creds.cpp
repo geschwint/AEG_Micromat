@@ -75,10 +75,10 @@ static bool aesKey(uint8_t out[32]) {
 
 // --- Store ------------------------------------------------------------------------------
 void credsBegin() {
-  // The eFuse driver creates its lock on first use; doing that later, in the
-  // middle of `keygen YES`, once aborted (2026-10-11, mutex creation returned
-  // NULL with plenty of RAM free; not reproducible). Create it now, at start,
-  // with an empty write batch: cancelled, so nothing is written.
+  // The eFuse driver creates its lock on first use; doing that in the middle
+  // of `keygen YES` once aborted (2026-10-11: internal RAM was used up, see
+  // crashReportBegin()). Create it now, at start, with an empty write batch:
+  // cancelled, so nothing is written.
   if (esp_efuse_batch_write_begin() == ESP_OK) esp_efuse_batch_write_cancel();
   WiFi.persistent(false);  // the Wi-Fi driver must not keep its own (plain text) copy
   Preferences p;

@@ -1,4 +1,5 @@
 #include "console.h"
+#include "crash_report.h"
 #include "debug_log.h"
 #include "perf.h"
 #include "settings.h"
@@ -8,7 +9,7 @@
 
 static const char *HELP =
   "commands: +N / -N (seconds) | t N (set seconds) | p N (power, watts) | start | stop | quick\n"
-  "          rot | open | close | s (status) | in (raw inputs) | perf (loop timing) | mem | T YYYY-MM-DD HH:MM:SS (set RTC, UTC)\n"
+  "          rot | open | close | s (status) | in (raw inputs) | perf (loop timing) | mem | crash (last crash) | crash clear | T YYYY-MM-DD HH:MM:SS (set RTC, UTC)\n"
   "          ssid NAME | pass PASSWORD (Wi-Fi network, password saved encrypted) | forget | wifi (status, sync now)\n"
   "          log (debug log status) | log on | log off (debug log on the SD card)\n"
   "          keygen (create the eFuse encryption key, once per chip)";
@@ -40,6 +41,8 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
   else if (cmd == "s") printStatus(oven, door, clock, outputs);
   else if (cmd == "in") inputs.printRaw();
   else if (cmd == "perf") loopStats.report();
+  else if (cmd == "crash") crashReportLog(true);
+  else if (cmd == "crash clear") crashReportClear();
   else if (cmd == "mem")
     Log.printf("mem: internal %u free, largest %u, min ever %u | PSRAM %u free\n",
                (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),

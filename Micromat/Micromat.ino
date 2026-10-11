@@ -6,6 +6,7 @@
 // No delay() anywhere in the control path. A loop watchdog restarts the board
 // (all outputs OFF) if loop() ever stalls.
 #include <Arduino_GFX_Library.h>
+#include "crash_report.h"
 #include "debug_log.h"
 #include <Wire.h>
 #include "config.h"
@@ -58,6 +59,7 @@ static void pumpDuringUpdate() {
 }
 
 void setup() {
+  crashReportBegin();  // records failed memory allocations (kept across a crash restart)
   outputs.begin();  // first: every output OFF
   pinMode(PIN_SD_CS, OUTPUT);  // SD card deselected, so it ignores the display's SPI traffic
   digitalWrite(PIN_SD_CS, HIGH);
@@ -68,6 +70,7 @@ void setup() {
   Serial.setTxTimeoutMs(0);
   Log.printf("Micromat controller starting (firmware %s, build %s, %s)\n", FIRMWARE_VERSION,
                 FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
+  crashReportLog(false);  // reset reason; the last crash, if one was saved
 
   loadSettings();  // before anything that uses them (buzzer volume, UI language, ...)
   credsBegin();    // Wi-Fi network store; also stops the Wi-Fi driver keeping a plain-text copy
