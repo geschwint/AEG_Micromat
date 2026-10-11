@@ -1,0 +1,94 @@
+# AEG Micromat 143 – new controller
+
+A replacement controller for an **AEG Micromat 143E/U** microwave oven (type C71A000V, ELC 03). The original control board (a PIC microcontroller with relays and SCRs) failed: only Quick start and Stop still responded. This project replaces it with an ESP32-S3 board with a 2" touch display. It drives the oven's relays and reads the original panel buttons, a rotary encoder and a power knob. The high-voltage section (transformer, capacitor, diode, magnetron) and the door safety switches stay original.
+
+> ⚠️ **Safety.** A microwave oven contains lethal voltages, and the high-voltage capacitor can stay charged after unplugging. Microwave radiation is dangerous. The door interlock switches stay in the mains path exactly as original; the software only *reads* the door. Never run the magnetron with an empty cavity (test with a cup of water). The safety principles are in [PLAN.md](PLAN.md#safety-principles).
+
+## Status
+
+Running on the bench, not yet installed in the oven. The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+
+## What it does
+
+- **Cooking:** set the time with the encoder (push = start) and the power with the knob (100/80/60/40/20 %, or 0 % = kitchen timer). Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
+- **Safety in software as well:** the magnetron only runs with the door closed and the fan running. All relays are off at power-up, on reset and when the door opens. A watchdog restarts the controller, with everything off, if the software hangs. The fan keeps cooling for 5 minutes after heavy use.
+- **Display:** a large clock when idle, and the remaining time while cooking. It dims after a while, and the panel LEDs turn off with it.
+- **Menu** (Program button, or tap):
+  - **Defrost** by food type and weight, with a "turn the food" beep halfway.
+  - **Programs:** fixed presets plus four favourites.
+  - **Settings:** clock, brightness, dimming, sound, language (English / Svenska), Wi-Fi, firmware update.
+  - **About:** firmware version and hardware details.
+- **Clock:** a battery-backed real-time clock keeps the time through power cuts. It can also be set over Wi-Fi.
+- **Wi-Fi (optional, off by default):** set up from a phone via the oven's own temporary network and a QR code. The Wi-Fi password is stored encrypted with a key from the chip's eFuses. That key has to be created once, and that step is permanent; see [HARDWARE.md](HARDWARE.md#efuse-key-for-the-wi-fi-password-not-created).
+- **Firmware update over Wi-Fi** from a browser, with automatic rollback if the new firmware doesn't start properly.
+
+## Hardware
+
+| Part | Used |
+|---|---|
+| Controller | Waveshare ESP32-S3-Touch-LCD-2: ESP32-S3, 16 MB flash, 8 MB PSRAM, 2" 320×240 IPS display (ST7789), CST816D touch |
+| Real-time clock | Soldered 333051 (PCF85063A), battery-backed |
+| Relays | Velleman VMA400 4-channel (fan, turntable, lamp, spare); magnetron on the oven's original relay |
+| Panel | Original buttons on a resistor ladder (Stop, Quick start, Program, Rotate), rotary encoder with push, power potentiometer, original LEDs, buzzer |
+
+Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
+
+## Repository
+
+| Path | Contents |
+|---|---|
+| `Micromat/` | The controller firmware (main sketch) |
+| `Test_*/` | Small sketches used to bring up each part: display, touch, LVGL, inputs, relays, buzzer, RTC |
+| `Multitask_LAB/` | Early non-blocking multitasking example (Arduino UNO R4) |
+| `tools/build.ps1` | Builds the firmware and saves a stamped image (see below) |
+| `config/lv_conf.h` | Copy of the LVGL configuration (see "Setting up") |
+| `PLAN.md` | Decisions, safety principles, architecture, screens, phases |
+| `HARDWARE.md` | Pins, wiring, parts, measurements, eFuse key notes |
+| `CLAUDE.md` | Detailed technical notes, kept for Claude Code but readable by anyone |
+| `*.png`, `*.jpg` | Reference images (icon ideas, the oven's rating plate) |
+
+## Setting up (Windows)
+
+1. Install [arduino-cli](https://arduino.github.io/arduino-cli/) and the ESP32 core **3.3.11**:
+   ```powershell
+   arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+   arduino-cli core update-index
+   arduino-cli core install esp32:esp32@3.3.11
+   ```
+2. Install the libraries: **lvgl 9.5.0** and **GFX Library for Arduino 1.6.9**:
+   `arduino-cli lib install lvgl@9.5.0 "GFX Library for Arduino@1.6.9"`
+3. Copy `config/lv_conf.h` to `Documents\Arduino\libraries\lv_conf.h` (LVGL only looks for it there). If you change one copy later, copy it over the other.
+
+## Building – always with the build script
+
+**Always build the firmware with `tools\build.ps1`.** This goes for people and for Claude alike. The script compiles the firmware and saves the deployable image under a name that says exactly what it is:
+
+```
+firmware\Micromat_v0.9.0_2026-10-11_5cefa112.bin
+                  version  build date fingerprint
+```
+
+- **Version:** `FIRMWARE_VERSION` in `Micromat/about.h`. Update it, and `FIRMWARE_DATE`, when releasing.
+- **Build date:** the day the image was built.
+- **Fingerprint:** unique per build. The oven shows the same fingerprint in Menu → About, on the service screen, on the update page and in the boot log, so you can always match the oven to an image.
+
+```powershell
+.\tools\build.ps1            # build and save the stamped image
+.\tools\build.ps1 -Upload    # also install it over USB (COM5; -Port COMx for another port)
+```
+
+Images in `firmware\` are not committed to git.
+
+## Installing
+
+- **Over USB:** `.\tools\build.ps1 -Upload`. If the board doesn't show up, hold BOOT, tap RESET, release BOOT.
+- **Over Wi-Fi:**
+  1. On the oven, open Settings → Firmware update (only when it's not cooking). The screen shows a QR code, a network name (`Micromat-XXXX`), a password and an address.
+  2. Join that network with a phone or PC and open **http://192.168.4.1**.
+  3. Enter the password and upload the stamped `.bin` from `firmware\`. On a phone, if the pop-up page can't open a file, use the normal browser; turn mobile data off if the page doesn't load.
+  4. The oven restarts into the new firmware. If the new firmware doesn't run normally for 30 seconds, the oven goes back to the previous one at the next restart.
+
+## Service and testing
+
+- **Service screen:** hold Program for 5 seconds. It shows outputs, door, button voltages, encoder, pot, oven state, clock, loop timing, fan run-on, Wi-Fi and firmware.
+- **Serial console** (USB, 115200 baud): send any unknown text for a list of commands, e.g. `s` for status or `in` for raw input readings.

@@ -19,11 +19,12 @@ The final MCU is not chosen yet; the leading candidate is the Waveshare ESP32-S3
 - Usually on `COM5`. esp32 core pinned to **3.3.11** (stable index URL); display via "GFX Library for Arduino" 1.6.9.
 - FQBN (16 MB flash, octal PSRAM, USB CDC on boot so Serial works over USB):
   `esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB`
-- Compile/upload: `arduino-cli compile --fqbn <FQBN> Test_Display` then `arduino-cli upload -p COM5 --fqbn <FQBN> Test_Display`
+- Compile/upload the `Test_*` sketches: `arduino-cli compile --fqbn <FQBN> Test_Display` then `arduino-cli upload -p COM5 --fqbn <FQBN> Test_Display`
+- **`Micromat`: always build with `tools\build.ps1`** (add `-Upload` to also flash over USB, `-Port COMx` for another port). Never plain `arduino-cli compile`/`upload` for `Micromat`. The script compiles with `--export-binaries` and saves the deployable image as `firmware\Micromat_v<FIRMWARE_VERSION>_<build date yyyy-MM-dd>_<fingerprint>.bin` (git-ignored). The fingerprint is read from the image's app descriptor (`app_elf_sha256`, offset 176 in the `.bin`), so it is exactly what the oven shows in About, the service screen, the update page and the boot log. Name that file when reporting a build or deployment to the user. `README.md` documents the same rule for people.
 - Firmware update over Wi-Fi (`Micromat` only; Settings → Firmware update on the oven shows the password):
-  - Build the image: `arduino-cli compile --fqbn <FQBN> --export-binaries Micromat` → `Micromat/build/esp32.esp32.esp32s3/Micromat.ino.bin` (git-ignored).
+  - The image to send is the stamped `.bin` in `firmware\` from `tools\build.ps1`.
   - Browser: join `Micromat-XXXX` (QR code), open http://192.168.4.1 (or the home-network address shown), enter the password, upload the `.bin`. **Verified 2026-10-10 from an Android phone** (10 s transfer, restart into the other slot, confirmed after 30 s). A phone's captive-portal mini-browser may not open a file picker; then use the normal browser (and turn off mobile data if it can't reach the page).
-  - Network upload (espota, untested so far): `arduino-cli upload -p 192.168.4.1 --protocol network --fqbn <FQBN> --upload-field password=<password> Micromat`.
+  - Network upload (espota, untested so far), after `tools\build.ps1`: `arduino-cli upload -p 192.168.4.1 --protocol network --fqbn <FQBN> --upload-field password=<password> Micromat`.
 - If the port vanishes right after connecting (firmware without USB CDC), enter download mode: hold BOOT, tap RESET, release BOOT.
 - Onboard pin usage (from Waveshare's demo package) — do not reuse for relays/inputs:
   LCD SPI SCLK 39, MOSI 38, MISO 40, DC 42, CS 45, backlight 1 (no LCD reset); I2C SDA 48 / SCL 47 (CST816D touch + QMI8658 IMU; also on the header); SD card CS 41 (shares LCD SPI); battery ADC 5; touch INT 46; IMU INT1 3; BOOT 0. Free header pins are listed in `HARDWARE.md`.
