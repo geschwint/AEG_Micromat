@@ -4,10 +4,11 @@
 #include "settings.h"
 #include "wifi_creds.h"
 #include "ui.h"
+#include <esp_heap_caps.h>
 
 static const char *HELP =
   "commands: +N / -N (seconds) | t N (set seconds) | p N (power, watts) | start | stop | quick\n"
-  "          rot | open | close | s (status) | in (raw inputs) | perf (loop timing) | T YYYY-MM-DD HH:MM:SS (set RTC, UTC)\n"
+  "          rot | open | close | s (status) | in (raw inputs) | perf (loop timing) | mem | T YYYY-MM-DD HH:MM:SS (set RTC, UTC)\n"
   "          ssid NAME | pass PASSWORD (Wi-Fi network, password saved encrypted) | forget | wifi (status, sync now)\n"
   "          log (debug log status) | log on | log off (debug log on the SD card)\n"
   "          keygen (create the eFuse encryption key, once per chip)";
@@ -39,6 +40,10 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
   else if (cmd == "s") printStatus(oven, door, clock, outputs);
   else if (cmd == "in") inputs.printRaw();
   else if (cmd == "perf") loopStats.report();
+  else if (cmd == "mem")
+    Log.printf("mem: internal %u free, largest %u, min ever %u | PSRAM %u free\n",
+               (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+               (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
   else if (cmd.startsWith("T ")) Log.println(clock.setUtc(cmd.substring(2).c_str()) ? "SET OK" : "SET FAILED");
   // Wi-Fi network: `ssid` first (stored as an open network), then `pass`.
   else if (cmd.startsWith("ssid ")) {
@@ -50,8 +55,12 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
     wifi.cancel();
     credsForget();
   } else if (cmd == "wifi") {
-    Log.printf("wifi: %s, network \"%s\", auto time %s, encryption key %s, %s\n", settings.wifiOn ? "on" : "OFF",
-                  credsSsid(), settings.autoTime ? "on" : "off", credsKeyReady() ? "ok" : "MISSING", wifi.status());
+    char pass[WIFI_PASS_MAX + 1];
+    bool passOk = credsPassword(pass, sizeof(pass));  // checks that it decrypts; never printed
+    memset(pass, 0, sizeof(pass));
+    Log.printf("wifi: %s, network \"%s\"%s, auto time %s, encryption key %s, %s\n", settings.wifiOn ? "on" : "OFF",
+                  credsSsid(), !credsHaveNetwork() ? "" : passOk ? " (password ok)" : " (password UNREADABLE)",
+                  settings.autoTime ? "on" : "off", credsKeyReady() ? "ok" : "MISSING", wifi.status());
     wifi.syncNow();
   } else if (cmd == "log on" || cmd == "log off") {
     settings.debugLog = cmd == "log on";
