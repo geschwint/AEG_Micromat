@@ -212,6 +212,7 @@ void WifiSetup::update(uint32_t now) {
     int32_t t = (int32_t)(now - testStart_);
     if (st == WL_CONNECTED) {
       bool saved = credsSave(testSsid_, testPass_);
+      if (saved) credsRememberIp();
       if (saved && !settings.wifiOn) {
         settings.wifiOn = true;
         saveSettings();

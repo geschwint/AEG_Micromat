@@ -380,6 +380,7 @@ void FirmwareUpdate::update(uint32_t now) {
     joiningHome_ = false;
     strlcpy(homeIp_, WiFi.localIP().toString().c_str(), sizeof(homeIp_));
     Log.printf("[%7lu] update: also on the home network at %s\n", now, homeIp_);
+    credsRememberIp();
   }
   if (hotspotStations() > 0) lastActivity_ = now;
 

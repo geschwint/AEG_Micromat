@@ -739,5 +739,8 @@ void uiReportTexts(uint8_t language) {
   for (uint8_t i = 0; i < (uint8_t)Str::Count; i++) {
     const char *s = tr((Str)i);
     Log.printf("T %u %ld %ld %ld %ld %s\n", i, width(s, font14), width(s, font20), width(s, font28), width(s, bigFont), s);  }
+  // Widest run-time values (menu rows, 20 px), for the label + value check.
+  for (const char *s : { "255.255.255.255", "192.168.1.254", "44:BB:F6:85:DE:78" })
+    Log.printf("V %ld %s\n", width(s, font20), s);
   settings.language = saved;
 }

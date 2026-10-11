@@ -61,8 +61,11 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
     char pass[WIFI_PASS_MAX + 1];
     bool passOk = credsPassword(pass, sizeof(pass));  // checks that it decrypts; never printed
     memset(pass, 0, sizeof(pass));
-    Log.printf("wifi: %s, network \"%s\"%s, auto time %s, encryption key %s, %s\n", settings.wifiOn ? "on" : "OFF",
-                  credsSsid(), !credsHaveNetwork() ? "" : passOk ? " (password ok)" : " (password UNREADABLE)",
+    char ip[16] = "-";
+    credsLastIp(ip, sizeof(ip));
+    Log.printf("wifi: %s, network \"%s\"%s, last IP %s, auto time %s, encryption key %s, %s\n",
+                  settings.wifiOn ? "on" : "OFF", credsSsid(),
+                  !credsHaveNetwork() ? "" : passOk ? " (password ok)" : " (password UNREADABLE)", ip,
                   settings.autoTime ? "on" : "off", credsKeyReady() ? "ok" : "MISSING", wifi.status());
     wifi.syncNow();
   } else if (cmd == "log on" || cmd == "log off") {

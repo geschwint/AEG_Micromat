@@ -129,6 +129,10 @@ enum class Str : uint8_t {
   AboutLvgl,
   AboutCore,
   OriginalRelay,
+  AboutIp,          // the oven's address on the home network (Wi-Fi connected)
+  AboutLastIp,      // ... the last one used (Wi-Fi off)
+  AboutMac,
+  Connected,
   Count
 };
 

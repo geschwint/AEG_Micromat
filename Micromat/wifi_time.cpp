@@ -61,7 +61,8 @@ void WifiTime::update(uint32_t now) {
   }
   if (phase_ == Phase::Connecting) {
     if (WiFi.status() == WL_CONNECTED) {
-      Log.printf("[%7lu] wifi: connected, asking NTP\n", now);
+      Log.printf("[%7lu] wifi: connected at %s, asking NTP\n", now, WiFi.localIP().toString().c_str());
+      credsRememberIp();
       sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
       configTzTime(LOCAL_TZ, "pool.ntp.org", "time.google.com");
       phase_ = Phase::WaitNtp;

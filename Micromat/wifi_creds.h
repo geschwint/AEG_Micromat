@@ -33,4 +33,8 @@ bool credsPassword(char *buf, size_t len);  // decrypts; false if it can't
 // Saves name + password (empty password = open network). False if the
 // password can't be encrypted (no key) or is too long.
 bool credsSave(const char *ssid, const char *pass);
-void credsForget();
+void credsForget();          // also forgets the last address
+// The oven's address on the home network: call when connected there (saved,
+// so About can show it while Wi-Fi is off; it's normally the same next time).
+void credsRememberIp();
+bool credsLastIp(char *buf, size_t len);  // false if never connected

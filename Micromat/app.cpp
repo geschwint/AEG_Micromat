@@ -7,6 +7,8 @@
 #include "about.h"
 #include "fw_update.h"
 #include <esp_arduino_version.h>
+#include <esp_mac.h>
+#include <WiFi.h>
 #include "wifi_creds.h"
 #include "wifi_setup.h"
 #include <lvgl.h>  // LV_SYMBOL_OK only
@@ -18,7 +20,9 @@ static constexpr uint32_t TURN_TOAST_MS = 8000;
 static const Str ROOT_ROWS[] = { Str::Defrost, Str::Programs, Str::Settings, Str::About };
 // Menu -> About: read-only label/value rows (values in aboutValue()).
 static const Str ABOUT_ROWS[] = {
-  Str::AboutFirmware, Str::AboutDate,   Str::AboutBuild,   Str::AboutOven,      Str::AboutOvenModel,
+  Str::AboutFirmware, Str::AboutDate,   Str::AboutBuild,
+  Str::Network,       Str::Wifi,        Str::AboutIp,      Str::AboutMac,  // Wi-Fi
+  Str::AboutOven,     Str::AboutOvenModel,
   Str::AboutType,     Str::AboutENr,    Str::AboutSerial,  Str::AboutBoard,     Str::AboutModel,
   Str::AboutChip,     Str::AboutCpu,    Str::AboutFlash,   Str::AboutPsram,     Str::AboutDisplay,
   Str::AboutTouch,    Str::AboutClockChip, Str::AboutRelays, Str::AboutMagnetron, Str::AboutLvgl,
@@ -159,8 +163,24 @@ void App::choiceApply(MenuId id, uint8_t i) {
 }
 
 // --- About -----------------------------------------------------------------------------
+static bool wifiConnected() { return WiFi.status() == WL_CONNECTED; }
+
 static void aboutValue(Str row, char *buf, size_t len) {
   switch (row) {
+    case Str::Network:  snprintf(buf, len, "%s", credsHaveNetwork() ? credsSsid() : tr(Str::NotSet)); break;
+    case Str::Wifi:
+      snprintf(buf, len, "%s", tr(wifiConnected() ? Str::Connected : WiFi.getMode() != WIFI_OFF ? Str::On : Str::Off));
+      break;
+    case Str::AboutIp:  // the label says "Last IP" while not connected (menuRow)
+      if (wifiConnected()) snprintf(buf, len, "%s", WiFi.localIP().toString().c_str());
+      else if (!credsLastIp(buf, len)) snprintf(buf, len, "-");
+      break;
+    case Str::AboutMac: {
+      uint8_t m[6];
+      esp_read_mac(m, ESP_MAC_WIFI_STA);  // what the router sees (the hotspot uses another)
+      snprintf(buf, len, "%02X:%02X:%02X:%02X:%02X:%02X", m[0], m[1], m[2], m[3], m[4], m[5]);
+      break;
+    }
     case Str::AboutFirmware:  snprintf(buf, len, "%s", FIRMWARE_VERSION); break;
     case Str::AboutDate:      snprintf(buf, len, "%s", FIRMWARE_DATE); break;
     case Str::AboutBuild:
@@ -273,7 +293,7 @@ void App::menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t v
       if (i == 0) choiceLabel(MenuId::DebugLogOn, choiceCurrent(MenuId::DebugLogOn), value, valueLen);
       break;
     case MenuId::About:
-      snprintf(label, labelLen, "%s", tr(ABOUT_ROWS[i]));
+      snprintf(label, labelLen, "%s", tr(ABOUT_ROWS[i] == Str::AboutIp && !wifiConnected() ? Str::AboutLastIp : ABOUT_ROWS[i]));
       aboutValue(ABOUT_ROWS[i], value, valueLen);
       break;
     default:  // choice list: the current value gets a check mark

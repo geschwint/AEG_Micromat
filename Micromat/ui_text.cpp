@@ -121,6 +121,10 @@ static const char *const ENGLISH[] = {
   "LVGL",                                       // AboutLvgl
   "Arduino core",                               // AboutCore
   "orig. relay",                                // OriginalRelay
+  "IP address",                                 // AboutIp
+  "Last IP",                                    // AboutLastIp
+  "MAC",                                        // AboutMac
+  "Connected",                                  // Connected
 };
 
 static const char *const SWEDISH[] = {
@@ -243,6 +247,10 @@ static const char *const SWEDISH[] = {
   "LVGL",                                       // AboutLvgl
   "Arduino-kärna",                              // AboutCore
   "orig. relä",                                 // OriginalRelay
+  "IP-adress",                                  // AboutIp
+  "Senaste IP",                                 // AboutLastIp
+  "MAC",                                        // AboutMac
+  "Ansluten",                                   // Connected
 };
 
 static const char *const GERMAN[] = {
@@ -365,6 +373,10 @@ static const char *const GERMAN[] = {
   "LVGL",                                       // AboutLvgl
   "Arduino-Core",                               // AboutCore
   "orig. Relais",                               // OriginalRelay
+  "IP-Adresse",                                 // AboutIp
+  "Letzte IP",                                  // AboutLastIp
+  "MAC",                                        // AboutMac
+  "Verbunden",                                  // Connected
 };
 
 static const char *const FRENCH[] = {
@@ -487,6 +499,10 @@ static const char *const FRENCH[] = {
   "LVGL",                                       // AboutLvgl
   "Noyau Arduino",                              // AboutCore
   "relais orig.",                               // OriginalRelay
+  "Adresse IP",                                 // AboutIp
+  "Dernière IP",                                // AboutLastIp
+  "MAC",                                        // AboutMac
+  "Connecté",                                   // Connected
 };
 
 static const char *const SPANISH[] = {
@@ -609,6 +625,10 @@ static const char *const SPANISH[] = {
   "LVGL",                                       // AboutLvgl
   "Núcleo Arduino",                             // AboutCore
   "relé orig.",                                 // OriginalRelay
+  "Dir. IP",                                    // AboutIp
+  "Última IP",                                  // AboutLastIp
+  "MAC",                                        // AboutMac
+  "Conectado",                                  // Connected
 };
 
 static_assert(sizeof(ENGLISH) / sizeof(ENGLISH[0]) == (size_t)Str::Count, "ENGLISH table must match Str");

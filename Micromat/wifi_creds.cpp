@@ -10,6 +10,7 @@
 static const char *const NAMESPACE = "wifi";
 static const char *const KEY_SSID = "ssid";
 static const char *const KEY_PASS = "pw";
+static const char *const KEY_IP = "ip";  // last address on the home network
 // HMAC input for the AES key; change the version to make old ciphertext unreadable.
 static const char HMAC_LABEL[] = "micromat wifi password v1";
 
@@ -22,6 +23,7 @@ struct PassBlob {
 };
 
 static char ssid_[WIFI_SSID_MAX + 1] = "";
+static uint32_t lastIp_ = 0;
 
 // --- eFuse key / AES key ------------------------------------------------------------
 static bool findKey(hmac_key_id_t &id) {
@@ -91,8 +93,27 @@ void credsBegin() {
   }
   if (p.begin(NAMESPACE, true)) {
     p.getString(KEY_SSID, ssid_, sizeof(ssid_));
+    lastIp_ = p.getUInt(KEY_IP, 0);
     p.end();
   }
+}
+
+// --- Last address on the home network (Menu -> About) ------------------------------------
+void credsRememberIp() {
+  uint32_t ip = (uint32_t)WiFi.localIP();
+  if (ip == 0 || ip == lastIp_) return;
+  lastIp_ = ip;
+  Preferences p;
+  if (p.begin(NAMESPACE, false)) {  // in the network's namespace: credsForget() clears it too
+    p.putUInt(KEY_IP, ip);
+    p.end();
+  }
+}
+
+bool credsLastIp(char *buf, size_t len) {
+  if (!lastIp_) return false;
+  snprintf(buf, len, "%s", IPAddress(lastIp_).toString().c_str());
+  return true;
 }
 
 bool credsHaveNetwork() { return ssid_[0] != '\0'; }
@@ -151,6 +172,10 @@ bool credsSave(const char *ssid, const char *pass) {
   Preferences p;
   if (!p.begin(NAMESPACE, false)) return false;
   bool ok = p.putString(KEY_SSID, ssid) > 0 && p.putBytes(KEY_PASS, &b, sizeof(b)) == sizeof(b);
+  if (ok && strcmp(ssid, ssid_) != 0) {  // another network: the old address means nothing there
+    p.remove(KEY_IP);
+    lastIp_ = 0;
+  }
   p.end();
   if (ok) strlcpy(ssid_, ssid, sizeof(ssid_));
   Log.printf("[%7lu] wifi: network \"%s\" %s\n", millis(), ssid, ok ? "saved (password encrypted)" : "SAVE FAILED");
@@ -164,5 +189,6 @@ void credsForget() {
     p.end();
   }
   ssid_[0] = '\0';
+  lastIp_ = 0;
   Log.printf("[%7lu] wifi: network forgotten\n", millis());
 }
