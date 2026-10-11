@@ -2,7 +2,7 @@
 .SYNOPSIS
   Builds the Micromat firmware and saves a deployable image stamped with its
   version, build date and fingerprint, e.g.
-  firmware\Micromat_v0.9.0_2026-10-11_aa911e1e.bin
+  firmware\Micromat_v1.0.0_2026-10-11_aa911e1e.bin
 
 .DESCRIPTION
   Always build through this script (people and Claude alike), so every image

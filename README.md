@@ -6,7 +6,7 @@ A replacement controller for an **AEG Micromat 143E/U** microwave oven (type C71
 
 ## Status
 
-Running on the bench, not yet installed in the oven. The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+**Version 1.0.0 (2026-10-11):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
 
 ## What it does
 
@@ -66,7 +66,7 @@ Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
 **Always build the firmware with `tools\build.ps1`.** This goes for people and for Claude alike. The script compiles the firmware and saves the deployable image under a name that says exactly what it is:
 
 ```
-firmware\Micromat_v0.9.0_2026-10-11_5cefa112.bin
+firmware\Micromat_v1.0.0_2026-10-11_5cefa112.bin
                   version  build date fingerprint
 ```
 
