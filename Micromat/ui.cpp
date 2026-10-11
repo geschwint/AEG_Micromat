@@ -433,6 +433,7 @@ static void refreshMain() {
   }
 
   uint32_t color;
+  bool blinking = false;  // paused: only the remaining time blinks
   if (powerView) {
     snprintf(buf, sizeof(buf), "%u W", oven_->power());
     color = C_ORANGE;
@@ -450,9 +451,19 @@ static void refreshMain() {
     if (st == OvenState::Cooking) color = C_ORANGE;
     else if (st == OvenState::Paused) color = C_YELLOW;
     else color = C_WHITE;
+    blinking = st == OvenState::Paused;
   }
   setText(timeLabel, buf);
   setColor(timeLabel, color);
+  // The blink starts shown, and starts over whenever the time changes (the
+  // knob turned while paused), so a new value is always seen at once.
+  static uint32_t blinkStart = 0;
+  static uint32_t blinkSecs = 0;
+  static bool wasBlinking = false;
+  if (blinking && (!wasBlinking || secs != blinkSecs)) blinkStart = now;
+  wasBlinking = blinking;
+  blinkSecs = secs;
+  setHidden(timeLabel, blinking && (now - blinkStart) % PAUSE_BLINK_MS >= PAUSE_BLINK_ON_MS);
 
   // Small caption under the big digits: "Paused"; "End" (green) under the clock
   // until the finished cook is acknowledged (Stop, door, or a new time); or the

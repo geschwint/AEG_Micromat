@@ -109,6 +109,8 @@ constexpr uint32_t ZERO_TO_CLOCK_MS = 10000;   // timer at 00:00 this long -> cl
 constexpr uint32_t SPLASH_MS = 5000;           // start-up splash (logo, model, firmware); any input ends it
 constexpr uint32_t POWER_VIEW_MS    = 1000;    // big watts on the main screen after the knob last moved
 constexpr uint32_t END_BIG_MS       = 10000;   // large "End" this long -> clock view (small "End")
+constexpr uint32_t PAUSE_BLINK_MS   = 1000;    // paused: the remaining time blinks, this period...
+constexpr uint32_t PAUSE_BLINK_ON_MS = 600;    // ...shown this long of it (starts shown; restarts on a change)
 constexpr uint32_t TOUCH_POLL_MS    = 30;
 constexpr int32_t BIG_DIGIT_PX      = 77;      // big digit font size (Tiny TTF)
 
