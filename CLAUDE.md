@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Replacement controller for an AEG Micromat 143 microwave oven: an MCU board with a display drives relays (magnetron, fan, turntable, lamp) and reads an encoder, buttons and a pot. See `PLAN.md` for decisions, safety principles, architecture and phases, and `HARDWARE.md` for free pins, the proposed pin map and the parts list. Keep both updated as decisions are made; new sketches should use the pin map from `HARDWARE.md`.
+Replacement controller for an AEG Micromat 143 microwave oven: an MCU board with a display drives relays (magnetron, fan, turntable, lamp) and reads an encoder, buttons and a pot. See `PLAN.md` for decisions, safety principles, architecture and phases, and `HARDWARE.md` for free pins, the proposed pin map and the parts list. `ORIGINAL_HARDWARE.md` reverse-engineers the oven's own boards (safety/door switches, power, control) from the photos in `Original Hardware/` (mirrored solder-over-component overlays in `Original Hardware/Overlays/`). Keep both updated as decisions are made; new sketches should use the pin map from `HARDWARE.md`.
 
 Each subfolder is a separate sketch (folder name must match its `.ino` file, per Arduino convention). `Multitask_LAB/` is non-blocking LED flashing used as a base for running several timed tasks at once.
 

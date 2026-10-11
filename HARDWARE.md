@@ -1,6 +1,6 @@
 # Hardware plan — AEG Micromat 143 controller
 
-Companion to `PLAN.md`. Pin facts come from Waveshare's schematic
+Companion to `PLAN.md`. The original oven's boards (safety, power, control) are reverse engineered in `ORIGINAL_HARDWARE.md`. Pin facts come from Waveshare's schematic
 (`https://files.waveshare.com/wiki/ESP32-S3-Touch-LCD-2/ESP32-S3-Touch-LCD-2-SchDoc.pdf`)
 and demo code. Mains assumed 230 V / 50 Hz.
 
@@ -91,10 +91,12 @@ The original panel buttons are reused: Stop, Quick start, Program, Rotate. The t
 - **Back-feed:** the header 5V pin is tied to USB VBUS. Feed it through a Schottky diode (e.g. SS34), or never plug USB into a PC while mains-powered.
 
 ### Relays and drivers
-- **K1 magnetron (decided): reuse the original power relay.** It's already rated for the transformer's inrush. Driven from GPIO17 by **reusing the original driver transistor and flyback diode** next to the relay. Coil supply from the second rail of a combined 5 V + 12/24 V PSU; coil ground tied to ESP32 ground.
-  - **Open: coil voltage (12–24 V)**, to be read during dismantling.
-  - **Check the base resistor:** it was sized for the PIC's (likely 5 V) drive. From 3.3 V, aim for ~2–8 mA base current (≈ coil current / 10), i.e. ~330 Ω–1 kΩ. Replace it (~680 Ω) if it's in the 4.7–10 kΩ range. If the transistor is a "digital" type with built-in resistors, note its part number and check it at 3.3 V.
-  - Fallback: switch the coil supply with the spare VMA400 channel (K5) instead (opto-isolated, no transistor work).
+- **K1 magnetron (decided): reuse the original power relay K22, an Omron G2R-1A-E: 12 VDC coil, SPST-NO, 16 A 250 VAC** (read 2026-10-11). It's already rated for the transformer's inrush. Coil from the 12 V rail of the combined 12 V + 5 V PSU (already chosen); coil ground tied to ESP32 ground.
+  - **Changed 2026-10-11 (see `ORIGINAL_HARDWARE.md`):** don't reuse the original driver transistor. The power board's logic side is very likely at mains potential (its triacs are gated directly), so take K22 off that board (desolder it or cut off its corner) and drive the coil with **our own** transistor from GPIO17:
+    - NPN (BC337/2N2222, ~1 kΩ base resistor) or a logic-level MOSFET;
+    - 1N4148/1N4007 across the coil;
+    - the coil takes roughly 40 mA (measure its resistance).
+  - Fallback: switch the 12 V coil supply with the spare VMA400 channel (K5) instead (opto-isolated, no transistor work).
 - **K2–K5 (fan, turntable, lamp, spare) (decided): Velleman VMA400** 4-channel relay module (same design as Electrokit 4101 8309). 4 × SPDT relays, 10 A @ 250 VAC, opto-isolated **active-high** inputs, 5 VDC supply (~70 mA per energised coil). Users report reliable triggering from 3.3 V (including Velleman's own Raspberry Pi example). One GPIO per channel: GPIO18/8/9/10. No onboard controller, so a reset turns everything off.
   - **Verified with `Test_Relays`:** all four channels switch from 3.3 V in order, and none flicker during upload or reset.
   - 10 kΩ pull-down on each input.
@@ -161,7 +163,8 @@ The Wi-Fi password is stored encrypted (`Micromat/wifi_creds.*`). The AES key is
 **Testing without burning:** the prebuilt Arduino core has no virtual-eFuse mode (`CONFIG_EFUSE_VIRTUAL` is off). Until the key exists, the serial commands, the menu and the setup screen can be tested up to the save step, which then reports "Could not save the password".
 
 ## Open questions
-- Magnetron relay coil voltage (and part number); the door-switch board's contacts (photos)
+- The door-switch board's contacts: which switch is primary/secondary/monitor and which E-tab is which (photos traced in `ORIGINAL_HARDWARE.md`; continuity checks still needed). Door sense: an extra microswitch (preferred) or a 230 V optocoupler.
+- Which power-board card-edge pad/wire feeds the fan, turntable and lamp (`ORIGINAL_HARDWARE.md`, checklist C)
 - Keep the pot, or set power by encoder/touch? (frees GPIO2)
 - Mic or IMU for popcorn (frees 6/7/21 if IMU)
 - Stop on the ladder, or on its own pin (GPIO16)?
