@@ -16,6 +16,7 @@
 #include "inputs.h"
 #include "app.h"
 #include "settings.h"
+#include "about.h"
 #include "fw_update.h"
 #include "wifi_creds.h"
 #include "wifi_setup.h"
@@ -61,8 +62,8 @@ void setup() {
   // With no reader on the PC, USB serial writes would otherwise wait up to
   // 100 ms each for buffer space, stalling loop(). Drop the log text instead.
   Serial.setTxTimeoutMs(0);
-  Serial.printf("Micromat controller starting (firmware %s, %s)\n", FirmwareUpdate::version(),
-                FirmwareUpdate::runningSlot());
+  Serial.printf("Micromat controller starting (firmware %s, build %s, %s)\n", FIRMWARE_VERSION,
+                FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
 
   loadSettings();  // before anything that uses them (buzzer volume, UI language, ...)
   credsBegin();    // Wi-Fi network store; also stops the Wi-Fi driver keeping a plain-text copy

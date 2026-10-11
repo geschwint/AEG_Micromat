@@ -5,6 +5,7 @@
 #include "perf.h"
 #include "ui_text.h"
 #include "wifi_setup.h"
+#include "about.h"
 #include "fw_update.h"
 #include "hotspot.h"
 
@@ -597,7 +598,8 @@ static void refreshService() {
   setText(serviceLines[7], buf);
   snprintf(buf, sizeof(buf), "Wi-Fi: %s", wifi_->status());
   setText(serviceLines[8], buf);
-  snprintf(buf, sizeof(buf), "Firmware: %s (%s)", FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
+  snprintf(buf, sizeof(buf), "Firmware: %s  build %s (%s)", FIRMWARE_VERSION, FirmwareUpdate::version(),
+           FirmwareUpdate::runningSlot());
   setText(serviceLines[9], buf);
   setText(serviceTitle, tr(Str::Service));
   setText(serviceHint, tr(Str::ServiceHint));

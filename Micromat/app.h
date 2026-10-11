@@ -29,7 +29,7 @@
 enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup, Update };
 // Choice lists come last (isChoice() relies on that order).
 enum class MenuId : uint8_t {
-  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi,
+  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi, About,
   Brightness, DimLevel, DimDelay, KeyClicks, Volume, Language, AutoTime, WifiOn
 };
 enum class EditId : uint8_t { DefrostWeight, ClockTime };

@@ -91,6 +91,28 @@ static const char *const ENGLISH[] = {
   "Sign in",                                    // PageSignIn
   "Wrong password",                             // PageWrongPassword
   "If no file picker opens here, open http://192.168.4.1 in your normal browser (Chrome, Safari).",  // PageBrowserHint
+  "About",                                      // About
+  "Firmware",                                   // AboutFirmware
+  "Date",                                       // AboutDate
+  "Build",                                      // AboutBuild
+  "Oven",                                       // AboutOven
+  "Type",                                       // AboutType
+  "E-Nr.",                                      // AboutENr
+  "Serial no.",                                 // AboutSerial
+  "Board",                                      // AboutBoard
+  "Model",                                      // AboutModel
+  "Chip",                                       // AboutChip
+  "CPU",                                        // AboutCpu
+  "Flash",                                      // AboutFlash
+  "PSRAM",                                      // AboutPsram
+  "Display",                                    // AboutDisplay
+  "Touch",                                      // AboutTouch
+  "Clock chip",                                 // AboutClockChip
+  "Relays",                                     // AboutRelays
+  "Magnetron",                                  // AboutMagnetron
+  "LVGL",                                       // AboutLvgl
+  "Arduino core",                               // AboutCore
+  "orig. relay",                                // OriginalRelay
 };
 
 static const char *const SWEDISH[] = {
@@ -183,6 +205,28 @@ static const char *const SWEDISH[] = {
   "Logga in",                                   // PageSignIn
   "Fel lösenord",                               // PageWrongPassword
   "Öppnas ingen filväljare här: öppna http://192.168.4.1 i din vanliga webbläsare (Chrome, Safari).",  // PageBrowserHint
+  "Om",                                         // About
+  "Programvara",                                // AboutFirmware
+  "Datum",                                      // AboutDate
+  "Bygge",                                      // AboutBuild
+  "Ugn",                                        // AboutOven
+  "Typ",                                        // AboutType
+  "E-nr",                                       // AboutENr
+  "Serienr",                                    // AboutSerial
+  "Kort",                                       // AboutBoard
+  "Modell",                                     // AboutModel
+  "Krets",                                      // AboutChip
+  "CPU",                                        // AboutCpu
+  "Flash",                                      // AboutFlash
+  "PSRAM",                                      // AboutPsram
+  "Skärm",                                      // AboutDisplay
+  "Pekskärm",                                   // AboutTouch
+  "Klockkrets",                                 // AboutClockChip
+  "Reläer",                                     // AboutRelays
+  "Magnetron",                                  // AboutMagnetron
+  "LVGL",                                       // AboutLvgl
+  "Arduino-kärna",                              // AboutCore
+  "orig. relä",                                 // OriginalRelay
 };
 
 static_assert(sizeof(ENGLISH) / sizeof(ENGLISH[0]) == (size_t)Str::Count, "ENGLISH table must match Str");

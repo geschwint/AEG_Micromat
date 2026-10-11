@@ -3,7 +3,9 @@
 #include "programs.h"
 #include "settings.h"
 #include "touch_cst816.h"
+#include "about.h"
 #include "fw_update.h"
+#include <esp_arduino_version.h>
 #include "wifi_creds.h"
 #include "wifi_setup.h"
 #include <lvgl.h>  // LV_SYMBOL_OK only
@@ -12,7 +14,14 @@ static constexpr uint32_t TURN_TOAST_MS = 8000;
 
 // --- Menu structure --------------------------------------------------------------
 // Rows of the fixed menus; each submenu's parent row index must match these.
-static const Str ROOT_ROWS[] = { Str::Defrost, Str::Programs, Str::Settings };
+static const Str ROOT_ROWS[] = { Str::Defrost, Str::Programs, Str::Settings, Str::About };
+// Menu -> About: read-only label/value rows (values in aboutValue()).
+static const Str ABOUT_ROWS[] = {
+  Str::AboutFirmware, Str::AboutDate,   Str::AboutBuild,   Str::AboutOven,      Str::AboutType,
+  Str::AboutENr,      Str::AboutSerial, Str::AboutBoard,   Str::AboutModel,     Str::AboutChip,
+  Str::AboutCpu,      Str::AboutFlash,  Str::AboutPsram,   Str::AboutDisplay,   Str::AboutTouch,
+  Str::AboutClockChip, Str::AboutRelays, Str::AboutMagnetron, Str::AboutLvgl, Str::AboutCore,
+};
 static const Str SETTINGS_ROWS[] = { Str::Clock, Str::Brightness, Str::DimLevel, Str::DimDelay, Str::Sound,
                                      Str::Language, Str::Wifi, Str::FirmwareUpdate };
 static const Str CLOCK_ROWS[] = { Str::SetTime, Str::AutoTime };
@@ -35,6 +44,7 @@ static const MenuInfo MENUS[] = {
   { Str::Clock, MenuId::Settings, 0 },                             // Clock
   { Str::Sound, MenuId::Settings, 4 },                             // Sound
   { Str::Wifi, MenuId::Settings, 6 },                              // Wifi
+  { Str::About, MenuId::Root, 3 },                                 // About
   { Str::Brightness, MenuId::Settings, 1 },                        // Brightness
   { Str::DimLevel, MenuId::Settings, 2 },                          // DimLevel
   { Str::DimDelay, MenuId::Settings, 3 },                          // DimDelay
@@ -135,6 +145,45 @@ void App::choiceApply(MenuId id, uint8_t i) {
   saveSettings();
 }
 
+// --- About -----------------------------------------------------------------------------
+static void aboutValue(Str row, char *buf, size_t len) {
+  switch (row) {
+    case Str::AboutFirmware:  snprintf(buf, len, "%s", FIRMWARE_VERSION); break;
+    case Str::AboutDate:      snprintf(buf, len, "%s", FIRMWARE_DATE); break;
+    case Str::AboutBuild:
+      snprintf(buf, len, "%s %s", FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
+      break;
+    case Str::AboutOven:      snprintf(buf, len, "%s", OVEN_MODEL); break;
+    case Str::AboutType:      snprintf(buf, len, "%s", OVEN_TYPE); break;
+    case Str::AboutENr:       snprintf(buf, len, "%s", OVEN_E_NR); break;
+    case Str::AboutSerial:    snprintf(buf, len, "%s", OVEN_SERIAL); break;
+    case Str::AboutBoard:     snprintf(buf, len, "%s", BOARD_MAKER); break;
+    case Str::AboutModel:     snprintf(buf, len, "%s", BOARD_MODEL); break;
+    case Str::AboutChip: {
+      uint16_t rev = ESP.getChipRevision();  // major * 100 + minor
+      snprintf(buf, len, "%s v%u.%u", ESP.getChipModel(), rev / 100, rev % 100);
+      break;
+    }
+    case Str::AboutCpu:
+      snprintf(buf, len, "%u \xC3\x97 %lu MHz", ESP.getChipCores(), (unsigned long)ESP.getCpuFreqMHz());
+      break;
+    case Str::AboutFlash:     snprintf(buf, len, "%lu MB", (unsigned long)(ESP.getFlashChipSize() >> 20)); break;
+    case Str::AboutPsram:     snprintf(buf, len, "%lu MB", (unsigned long)(ESP.getPsramSize() >> 20)); break;
+    case Str::AboutDisplay:   snprintf(buf, len, "%s", DISPLAY_INFO); break;
+    case Str::AboutTouch:     snprintf(buf, len, "%s", TOUCH_CHIP); break;
+    case Str::AboutClockChip: snprintf(buf, len, "%s", RTC_CHIP); break;
+    case Str::AboutRelays:    snprintf(buf, len, "%s", RELAY_BOARD); break;
+    case Str::AboutMagnetron: snprintf(buf, len, "%s", tr(Str::OriginalRelay)); break;
+    case Str::AboutLvgl:
+      snprintf(buf, len, "%d.%d.%d", LVGL_VERSION_MAJOR, LVGL_VERSION_MINOR, LVGL_VERSION_PATCH);
+      break;
+    case Str::AboutCore:
+      snprintf(buf, len, "%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
+      break;
+    default: buf[0] = '\0'; break;
+  }
+}
+
 // --- Menu view -------------------------------------------------------------------------
 const char *App::menuTitle() const { return tr(MENUS[(size_t)menuId_].title); }
 
@@ -148,6 +197,7 @@ uint8_t App::menuCount() const {
     case MenuId::Clock:         return count(CLOCK_ROWS);
     case MenuId::Sound:         return count(SOUND_ROWS);
     case MenuId::Wifi:          return count(WIFI_ROWS);
+    case MenuId::About:         return count(ABOUT_ROWS);
     default:                    return choiceCount(menuId_);
   }
 }
@@ -201,6 +251,10 @@ void App::menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t v
       snprintf(label, labelLen, "%s", tr(WIFI_ROWS[i]));
       if (i == 0) choiceLabel(MenuId::WifiOn, choiceCurrent(MenuId::WifiOn), value, valueLen);
       else if (i == 1) snprintf(value, valueLen, "%s", credsHaveNetwork() ? credsSsid() : tr(Str::NotSet));
+      break;
+    case MenuId::About:
+      snprintf(label, labelLen, "%s", tr(ABOUT_ROWS[i]));
+      aboutValue(ABOUT_ROWS[i], value, valueLen);
       break;
     default:  // choice list: the current value gets a check mark
       choiceLabel(menuId_, i, label, labelLen);
@@ -362,7 +416,7 @@ void App::menuSelect() {
   }
   switch (menuId_) {
     case MenuId::Root:
-      openMenu(i == 0 ? MenuId::Defrost : i == 1 ? MenuId::Programs : MenuId::Settings);
+      openMenu(i == 0 ? MenuId::Defrost : i == 1 ? MenuId::Programs : i == 2 ? MenuId::Settings : MenuId::About);
       break;
     case MenuId::Defrost:
       defrostType_ = i;

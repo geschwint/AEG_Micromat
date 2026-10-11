@@ -1,4 +1,5 @@
 #include "fw_update.h"
+#include "about.h"
 #include <ArduinoOTA.h>
 #include <Update.h>
 #include <WebServer.h>
@@ -86,6 +87,8 @@ void FirmwareUpdate::registerPages() {
     p += "<p class='dim'>";
     p += tr(Str::PageVersion);
     p += ": ";
+    p += FIRMWARE_VERSION;
+    p += ", build ";
     p += version();
     p += " (";
     p += runningSlot();
