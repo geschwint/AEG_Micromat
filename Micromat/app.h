@@ -50,6 +50,7 @@ public:
   // View for the UI
   Screen screen() const { return screen_; }
   bool dimmed() const { return dimmed_; }
+  bool splash() const { return splash_; }  // start-up splash (logo, model, firmware) still showing
   uint8_t backlightPercent() const;  // includes the live preview while choosing brightness
   const char *toast() const;         // short message, or nullptr
   enum class Program : uint8_t { None, Defrost, Preset, Favourite };
@@ -120,6 +121,8 @@ private:
   uint8_t potPercent_ = 100;     // power the pot selects (restored when a program ends)
 
   bool dimmed_ = false;
+  bool splash_ = true;
+  uint32_t splashStart_ = 0;
   uint32_t lastUse_ = 0;  // last user activity (menu timeout)
   uint32_t dimRef_ = 0;   // dim countdown start (also reset while dimming isn't allowed)
 

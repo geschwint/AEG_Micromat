@@ -88,6 +88,7 @@ constexpr uint32_t MENU_TIMEOUT_MS  = 30000;   // menu closes after 30 s without
 constexpr uint32_t SERVICE_HOLD_MS  = 5000;    // hold Program this long for the service screen
 constexpr uint32_t TOAST_MS         = 2000;    // short on-screen messages
 constexpr uint32_t ZERO_TO_CLOCK_MS = 10000;   // timer at 00:00 this long -> clock view
+constexpr uint32_t SPLASH_MS = 5000;           // start-up splash (logo, model, firmware); any input ends it
 constexpr uint32_t END_BIG_MS       = 10000;   // large "End" this long -> clock view (small "End")
 constexpr uint32_t TOUCH_POLL_MS    = 30;
 constexpr int32_t BIG_DIGIT_PX      = 77;      // big digit font size (Tiny TTF)

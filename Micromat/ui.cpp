@@ -7,6 +7,7 @@
 #include "wifi_setup.h"
 #include "about.h"
 #include "fw_update.h"
+#include "logo_aeg.h"
 #include "hotspot.h"
 
 static Arduino_GFX *gfx_;
@@ -26,7 +27,7 @@ static constexpr uint32_t C_BG = 0x101418, C_DIM_TEXT = 0x9EB3C2, C_WHITE = 0xFF
                           C_RED = 0xE53935, C_PANEL = 0x37474F, C_BAR_BG = 0x263238, C_ICE = 0x81D4FA;
 
 // Views
-static lv_obj_t *mainView, *dimView, *menuView, *editView, *serviceView;
+static lv_obj_t *mainView, *dimView, *menuView, *editView, *serviceView, *splashView;
 // Main view
 static lv_obj_t *clockLabel, *timeLabel, *subLabel, *toastLabel, *powerBar, *powerLabel, *magOn, *magOff;
 static lv_obj_t *progDefrost, *progPreset, *progFavourite;  // program icons
@@ -253,6 +254,25 @@ static void buildMainView(lv_obj_t *scr) {
   lv_obj_set_style_radius(powerBar, 6, LV_PART_INDICATOR);
   powerLabel = makeLabel(powerBar, font20, C_WHITE);
   lv_obj_center(powerLabel);
+}
+
+// Start-up splash: the AEG logo (white background, like the brand), the oven
+// model and the firmware version/date. Static: built once, never refreshed.
+static void buildSplashView(lv_obj_t *scr) {
+  splashView = makeView(scr);
+  lv_obj_set_style_bg_color(splashView, lv_color_white(), 0);
+  lv_obj_set_style_bg_opa(splashView, LV_OPA_COVER, 0);
+  lv_obj_t *logo = lv_image_create(splashView);
+  lv_image_set_src(logo, &LOGO_AEG);
+  lv_obj_align(logo, LV_ALIGN_TOP_MID, 0, 26);
+  lv_obj_t *model = makeLabel(splashView, font28, C_BAR_BG);
+  lv_label_set_text(model, OVEN_MODEL);
+  lv_obj_align(model, LV_ALIGN_TOP_MID, 0, 26 + LOGO_AEG.header.h + 16);
+  lv_obj_t *fw = makeLabel(splashView, font20, C_GREY);
+  char buf[48];
+  snprintf(buf, sizeof(buf), "%s %s  \xC2\xB7  %s", tr(Str::AboutFirmware), FIRMWARE_VERSION, FIRMWARE_DATE);
+  lv_label_set_text(fw, buf);
+  lv_obj_align(fw, LV_ALIGN_TOP_MID, 0, 26 + LOGO_AEG.header.h + 16 + 42);
 }
 
 static void buildDimView(lv_obj_t *scr) {
@@ -616,6 +636,12 @@ static void refresh(lv_timer_t *) {
   }
 
   Screen s = app_->screen();
+  if (app_->splash()) {  // over everything else until it ends
+    setHidden(splashView, false);
+    for (lv_obj_t *v : { mainView, dimView, menuView, editView, serviceView, wifiView }) setHidden(v, true);
+    return;
+  }
+  setHidden(splashView, true);
   bool dim = s == Screen::Main && app_->dimmed();
   setHidden(mainView, !(s == Screen::Main && !dim));
   setHidden(dimView, !dim);
@@ -662,6 +688,7 @@ void uiBegin(Arduino_GFX *gfx, App &app, Oven &oven, Door &door, Clock &clock, O
   lv_obj_remove_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
   buildMainView(scr);
   buildDimView(scr);
+  buildSplashView(scr);
   buildMenuView(scr);
   buildEditView(scr);
   buildServiceView(scr);

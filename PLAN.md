@@ -71,6 +71,7 @@ Notes:
 
 | Screen | Content |
 |---|---|
+| **Start-up splash** | 5 s after power-up: the AEG logo filling the width on a white background, the oven model (AEG Micromat 143E/U) and "Firmware 0.9.0 · 2026-10-11" below it. The encoder or a touch ends it early; panel buttons end it and act as usual. |
 | **Main, clock view** (idle with nothing set, or done) | Current time **HH:MM large in the centre**, nothing in the upper left. Shown at boot, after the timer has shown 00:00 for 10 s, and 10 s after a large green **"End"**; then a small green "End" stays under the clock until acknowledged (Stop, door, new time). Stop or the door during the large "End" switches to the clock at once. Power bar and magnetron icon as below. |
 | **Main, timer view** (time set / cooking / paused) | Current time **HH:MM, small, upper left**. Remaining/set time **extra large** as `MM:SS`, or `H:MM:SS` when an hour or more is set. **Power as a percentage bar along the bottom** ("Timer" at 0 %). **Small magnetron icon** in two versions: plain = magnetron on, crossed out = off (shows the duty cycling at partial power). No rotate indicator (panel LED does that), no door indicator. **Program icon** left of the magnetron icon while a program from the menu is loaded: snowflake = defrost, cloche = any preset (shared for now), star = favourite; gone when the program ends or is cleared. |
 | **Door open** | **"OPEN"** in large characters (replaces the time while the door is open). |

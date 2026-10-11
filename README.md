@@ -12,7 +12,7 @@ Running on the bench, not yet installed in the oven. The panel buttons, encoder,
 
 - **Cooking:** set the time with the encoder (push = start) and the power with the knob (100/80/60/40/20 %, or 0 % = kitchen timer). Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
 - **Safety in software as well:** the magnetron only runs with the door closed and the fan running. All relays are off at power-up, on reset and when the door opens. A watchdog restarts the controller, with everything off, if the software hangs. The fan keeps cooling for 5 minutes after heavy use.
-- **Display:** a large clock when idle, and the remaining time while cooking. It dims after a while, and the panel LEDs turn off with it.
+- **Display:** a 5-second start-up splash with the AEG logo, the oven model and the firmware version; then a large clock when idle, and the remaining time while cooking. It dims after a while, and the panel LEDs turn off with it.
 - **Menu** (Program button, or tap):
   - **Defrost** by food type and weight, with a "turn the food" beep halfway.
   - **Programs:** fixed presets plus four favourites.
@@ -41,6 +41,7 @@ Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
 | `Test_*/` | Small sketches used to bring up each part: display, touch, LVGL, inputs, relays, buzzer, RTC |
 | `Multitask_LAB/` | Early non-blocking multitasking example (Arduino UNO R4) |
 | `tools/build.ps1` | Builds the firmware and saves a stamped image (see below) |
+| `tools/make_logo.ps1` | Turns the logo image into `Micromat/logo_aeg.h` for the start-up splash (run with Windows PowerShell 5.1) |
 | `config/lv_conf.h` | Copy of the LVGL configuration (see "Setting up") |
 | `PLAN.md` | Decisions, safety principles, architecture, screens, phases |
 | `HARDWARE.md` | Pins, wiring, parts, measurements, eFuse key notes |

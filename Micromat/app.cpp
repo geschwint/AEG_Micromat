@@ -302,6 +302,7 @@ void App::begin(Oven &oven, Door &door, Buzzer &buzzer, Clock &clock, WifiTime &
   wifi_ = &wifi;
   lastDoorClosed_ = door.closed();
   lastState_ = oven.state();
+  splashStart_ = millis();
   use();
 }
 
@@ -638,15 +639,17 @@ void App::editInput(InputEvent e, int32_t value) {
 
 // --- Input handling ----------------------------------------------------------------------
 void App::onInput(InputEvent e, int32_t value) {
-  bool wasDimmed = dimmed_;
-  use();
-
   if (e == InputEvent::PotPower) {  // the pot is a direct control on every screen
+    if (!splash_) use();  // (its first report comes at start-up: that mustn't end the splash)
     potPercent_ = value;
     oven_->setPower(value);
     return;
   }
-  if (wasDimmed && (e == InputEvent::EncoderTurn || e == InputEvent::EncoderPush)) return;  // wake only
+  // Like waking from dimmed: the encoder only ends the splash; buttons end it and act.
+  bool wakeOnly = dimmed_ || splash_;
+  splash_ = false;
+  use();
+  if (wakeOnly && (e == InputEvent::EncoderTurn || e == InputEvent::EncoderPush)) return;
   if (e == InputEvent::ProgramHold) {
     Serial.printf("[%7lu] service screen\n", millis());
     buzzer_->click();
@@ -758,22 +761,28 @@ void App::update(uint32_t now) {
     touchRead(t);
     if (t.pressed && !touchDown_) {
       touchDown_ = true;
-      bool wasDimmed = dimmed_;
+      bool wakeOnly = dimmed_ || splash_;  // a touch only ends the splash / wakes
+      splash_ = false;
       use();
-      if (!wasDimmed) onTouch(t.x, t.y);
+      if (!wakeOnly) onTouch(t.x, t.y);
     } else if (!t.pressed) {
       touchDown_ = false;
     }
   }
 
+  // The splash ends after SPLASH_MS (or earlier on any input or change below).
+  if (splash_ && now - splashStart_ >= SPLASH_MS) splash_ = false;
+
   // Door and oven state changes count as use and bring the main screen back.
   if (door_->closed() != lastDoorClosed_) {
     lastDoorClosed_ = door_->closed();
+    splash_ = false;
     use();
     closeMenu();
   }
   if (oven_->state() != lastState_) {
     lastState_ = oven_->state();
+    splash_ = false;
     use();
     if (lastState_ == OvenState::Done) closeMenu();
   }
