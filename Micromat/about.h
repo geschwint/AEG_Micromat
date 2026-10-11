@@ -3,12 +3,14 @@
 // fingerprint, active slot) are read at run time in App::menuRow().
 #pragma once
 
-// Firmware release: bump both when releasing a new version. (A build date
-// from __DATE__ isn't used: with arduino-cli's build cache it only changes
+// Firmware version, major.minor.build: bump it with every firmware change
+// (bug fix: build, feature: minor, major rework: major; see README.md
+// "Versions and releases") and set the date to the day of the change. (A build
+// date from __DATE__ isn't used: with arduino-cli's build cache it only changes
 // when that one file is recompiled. The build fingerprint identifies every
 // build exactly; see FirmwareUpdate::version().)
-constexpr const char *FIRMWARE_VERSION = "1.0.0";
-constexpr const char *FIRMWARE_DATE = "2026-10-11";
+constexpr const char *FIRMWARE_VERSION = "1.0.1";
+constexpr const char *FIRMWARE_DATE = "2026-10-12";
 
 // Oven rating plate, inside the door frame (photo: AboutTheMicro.jpg).
 constexpr const char *OVEN_MAKER = "AEG";

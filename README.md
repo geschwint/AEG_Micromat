@@ -6,7 +6,7 @@ A replacement controller for an **AEG Micromat 143E/U** microwave oven (type C71
 
 ## Status
 
-**Version 1.0.0 (2026-10-11):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+**Version 1.0.1 (2026-10-12):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
 
 ## What it does
 
@@ -70,7 +70,7 @@ firmware\Micromat_v1.0.0_2026-10-11_5cefa112.bin
                   version  build date fingerprint
 ```
 
-- **Version:** `FIRMWARE_VERSION` in `Micromat/about.h`. Update it, and `FIRMWARE_DATE`, when releasing.
+- **Version:** `FIRMWARE_VERSION` in `Micromat/about.h`, `major.minor.build` (see [Versions and releases](#versions-and-releases)).
 - **Build date:** the day the image was built.
 - **Fingerprint:** unique per build. The oven shows the same fingerprint in Menu → About, on the service screen, on the update page and in the boot log, so you can always match the oven to an image.
 
@@ -80,6 +80,20 @@ firmware\Micromat_v1.0.0_2026-10-11_5cefa112.bin
 ```
 
 Images in `firmware\` are not committed to git.
+
+## Versions and releases
+
+**Always increase the version** with every change to the firmware that goes into `master`, so each version means exactly one state of the code. The version is `major.minor.build` (`FIRMWARE_VERSION` in `Micromat/about.h`); set `FIRMWARE_DATE` next to it to the day of the change.
+
+| Change | Bump | Example |
+|---|---|---|
+| Bug fixes | build | 1.0.0 → 1.0.1 |
+| New features | minor (build back to 0) | 1.0.1 → 1.1.0 |
+| Major rework (decided case by case) | major (minor and build back to 0) | 1.1.0 → 2.0.0 |
+
+A change with both fixes and features bumps the minor.
+
+`master` is protected: every change goes in through a pull request from a `feature/...` or `bug/...` branch, and the version bump is part of that pull request. **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`), and that branch is what gets built and installed.
 
 ## Installing
 
