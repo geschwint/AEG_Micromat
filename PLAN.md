@@ -94,7 +94,7 @@ Notes:
 
 ### Proposed details (to confirm)
 - Max cook time raised from 99:59 to **9:59:59** (one-digit hour).
-- **Encoder steps** (decided 2026-10-11), by the time already set: 0–2 min **5 s**, 2–5 min **10 s**, 5–10 min **20 s**, 10–20 min **30 s**, 20 min–1 h **1 min**, above 1 h **5 min**. With **acceleration**: turning fast takes several steps per click (up to 5); slow turning is always one step. Thresholds to tune on the hardware.
+- **Encoder steps** (decided 2026-10-11), by the time already set: 0–2 min **5 s**, 2–5 min **10 s**, 5–10 min **20 s**, 10–20 min **30 s**, 20 min–1 h **1 min**, above 1 h **5 min**. With **acceleration**: turning fast takes several steps per click (up to 5); slow turning is always one step. Thresholds checked on the hardware 2026-10-11: feel right as they are.
 - Menu exit: Stop button = back/exit; the menu also closes after 30 s without use.
 - Service screen reached through a hidden gesture, e.g. **holding Program for 5 s**.
 
