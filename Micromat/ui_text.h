@@ -103,6 +103,7 @@ enum class Str : uint8_t {
   AboutDate,
   AboutBuild,
   AboutOven,
+  AboutOvenModel,
   AboutType,
   AboutENr,
   AboutSerial,

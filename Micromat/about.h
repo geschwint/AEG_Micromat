@@ -11,7 +11,9 @@ constexpr const char *FIRMWARE_VERSION = "0.9.0";
 constexpr const char *FIRMWARE_DATE = "2026-10-11";
 
 // Oven rating plate, inside the door frame (photo: AboutTheMicro.jpg).
-constexpr const char *OVEN_MODEL = "AEG Micromat 143E/U";
+constexpr const char *OVEN_MAKER = "AEG";
+constexpr const char *OVEN_NAME = "Micromat 143E/U";
+constexpr const char *OVEN_MODEL = "AEG Micromat 143E/U";  // both (splash)
 constexpr const char *OVEN_TYPE = "C71A000V  ELC 03";
 constexpr const char *OVEN_E_NR = "947.602 432";
 constexpr const char *OVEN_SERIAL = "417 10918";

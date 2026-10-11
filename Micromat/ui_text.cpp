@@ -96,6 +96,7 @@ static const char *const ENGLISH[] = {
   "Date",                                       // AboutDate
   "Build",                                      // AboutBuild
   "Oven",                                       // AboutOven
+  "Model",                                      // AboutOvenModel
   "Type",                                       // AboutType
   "E-Nr.",                                      // AboutENr
   "Serial no.",                                 // AboutSerial
@@ -210,6 +211,7 @@ static const char *const SWEDISH[] = {
   "Datum",                                      // AboutDate
   "Bygge",                                      // AboutBuild
   "Ugn",                                        // AboutOven
+  "Modell",                                     // AboutOvenModel
   "Typ",                                        // AboutType
   "E-nr",                                       // AboutENr
   "Serienr",                                    // AboutSerial

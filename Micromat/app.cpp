@@ -17,10 +17,11 @@ static constexpr uint32_t TURN_TOAST_MS = 8000;
 static const Str ROOT_ROWS[] = { Str::Defrost, Str::Programs, Str::Settings, Str::About };
 // Menu -> About: read-only label/value rows (values in aboutValue()).
 static const Str ABOUT_ROWS[] = {
-  Str::AboutFirmware, Str::AboutDate,   Str::AboutBuild,   Str::AboutOven,      Str::AboutType,
-  Str::AboutENr,      Str::AboutSerial, Str::AboutBoard,   Str::AboutModel,     Str::AboutChip,
-  Str::AboutCpu,      Str::AboutFlash,  Str::AboutPsram,   Str::AboutDisplay,   Str::AboutTouch,
-  Str::AboutClockChip, Str::AboutRelays, Str::AboutMagnetron, Str::AboutLvgl, Str::AboutCore,
+  Str::AboutFirmware, Str::AboutDate,   Str::AboutBuild,   Str::AboutOven,      Str::AboutOvenModel,
+  Str::AboutType,     Str::AboutENr,    Str::AboutSerial,  Str::AboutBoard,     Str::AboutModel,
+  Str::AboutChip,     Str::AboutCpu,    Str::AboutFlash,   Str::AboutPsram,     Str::AboutDisplay,
+  Str::AboutTouch,    Str::AboutClockChip, Str::AboutRelays, Str::AboutMagnetron, Str::AboutLvgl,
+  Str::AboutCore,
 };
 static const Str SETTINGS_ROWS[] = { Str::Clock, Str::Brightness, Str::DimLevel, Str::DimDelay, Str::Sound,
                                      Str::Language, Str::Wifi, Str::FirmwareUpdate };
@@ -153,7 +154,8 @@ static void aboutValue(Str row, char *buf, size_t len) {
     case Str::AboutBuild:
       snprintf(buf, len, "%s %s", FirmwareUpdate::version(), FirmwareUpdate::runningSlot());
       break;
-    case Str::AboutOven:      snprintf(buf, len, "%s", OVEN_MODEL); break;
+    case Str::AboutOven:      snprintf(buf, len, "%s", OVEN_MAKER); break;
+    case Str::AboutOvenModel: snprintf(buf, len, "%s", OVEN_NAME); break;
     case Str::AboutType:      snprintf(buf, len, "%s", OVEN_TYPE); break;
     case Str::AboutENr:       snprintf(buf, len, "%s", OVEN_E_NR); break;
     case Str::AboutSerial:    snprintf(buf, len, "%s", OVEN_SERIAL); break;
