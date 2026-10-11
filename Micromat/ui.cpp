@@ -11,6 +11,7 @@
 #include "fw_update.h"
 #include "logo_aeg.h"
 #include "hotspot.h"
+#include "wifi_creds.h"
 
 static Arduino_GFX *gfx_;
 static App *app_;
@@ -34,6 +35,7 @@ static lv_obj_t *mainView, *dimView, *menuView, *editView, *serviceView, *splash
 // Main view
 static lv_obj_t *clockLabel, *timeLabel, *subLabel, *toastLabel, *powerBar, *powerLabel, *magOn, *magOff;
 static lv_obj_t *progDefrost, *progPreset, *progFavourite;  // program icons
+static lv_obj_t *wifiIcon;  // home network set up
 // Dimmed (sleep) view: the logo at the top, the clock at the bottom
 static lv_obj_t *dimClock;
 // Menu view (row geometry from app.h, shared with touch hit-testing)
@@ -173,19 +175,39 @@ static lv_obj_t *makeMagIcon(lv_obj_t *parent, bool on) {
   return box;
 }
 
-// Program icons, left of the magnetron icon while a program from the menu is
-// loaded: snowflake = defrost, cloche = preset (shared by all presets for now),
-// star = favourite. Same size and line style as the magnetron icon.
-static constexpr int32_t PROG_ICON_X = -6 - ICON_W - 8;  // from the right edge
-static lv_point_precise_t flakeArms[3][2], flakeTips[6][3], starPts[11], clochePts[13];
+// Icon slots from the right edge: magnetron, then Wi-Fi (only while a home
+// network is set up), then the program icon (moves right when there's no Wi-Fi icon).
+static constexpr int32_t ICON_SLOT_X[] = { -6, -6 - (ICON_W + 8), -6 - 2 * (ICON_W + 8) };
 
 static lv_point_precise_t polar(float cx, float cy, float r, float a) {
   return { (int32_t)lroundf(cx + r * cosf(a)), (int32_t)lroundf(cy - r * sinf(a)) };
 }
 
+// Wi-Fi icon: a dot and three arcs (quarter circles) above it.
+static lv_point_precise_t wifiArcs[3][9];
+
+static lv_obj_t *makeWifiIcon(lv_obj_t *parent) {
+  static const lv_point_precise_t DOT[] = { { 17, 25 }, { 17, 26 } };
+  static const float RADII[] = { 7, 14, 21 };
+  for (uint8_t r = 0; r < 3; r++) {
+    for (uint8_t i = 0; i < 9; i++) wifiArcs[r][i] = polar(17, 26, RADII[r], PI / 4 + i * PI / 16);
+  }
+  lv_obj_t *box = makeBox(parent, ICON_W, ICON_H);
+  lv_obj_align(box, LV_ALIGN_TOP_RIGHT, ICON_SLOT_X[1], 2);
+  lv_obj_add_flag(box, LV_OBJ_FLAG_HIDDEN);
+  for (uint8_t r = 0; r < 3; r++) makeLine(box, wifiArcs[r], 9, 3, C_DIM_TEXT);
+  makeLine(box, DOT, 2, 5, C_DIM_TEXT);
+  return box;
+}
+
+// Program icons, left of the magnetron (and Wi-Fi) icon while a program from
+// the menu is loaded: snowflake = defrost, cloche = preset (shared by all
+// presets for now), star = favourite. Same size and line style as the magnetron icon.
+static lv_point_precise_t flakeArms[3][2], flakeTips[6][3], starPts[11], clochePts[13];
+
 static lv_obj_t *makeProgIcon(lv_obj_t *parent) {
   lv_obj_t *box = makeBox(parent, ICON_W, ICON_H);
-  lv_obj_align(box, LV_ALIGN_TOP_RIGHT, PROG_ICON_X, 2);
+  lv_obj_align(box, LV_ALIGN_TOP_RIGHT, ICON_SLOT_X[1], 2);
   lv_obj_add_flag(box, LV_OBJ_FLAG_HIDDEN);
   return box;
 }
@@ -238,6 +260,7 @@ static void buildMainView(lv_obj_t *scr) {
   progDefrost = makeDefrostIcon(mainView);
   progPreset = makePresetIcon(mainView);
   progFavourite = makeFavouriteIcon(mainView);
+  wifiIcon = makeWifiIcon(mainView);
 
   timeLabel = makeBigDigits(mainView);
   lv_obj_align(timeLabel, LV_ALIGN_CENTER, 0, -22);
@@ -402,6 +425,13 @@ static void refreshMain() {
   setHidden(progDefrost, prog != App::Program::Defrost);
   setHidden(progPreset, prog != App::Program::Preset);
   setHidden(progFavourite, prog != App::Program::Favourite);
+  bool wifiSet = credsHaveNetwork();
+  if (lv_obj_has_flag(wifiIcon, LV_OBJ_FLAG_HIDDEN) == wifiSet) {  // changed: move the program icons
+    setHidden(wifiIcon, !wifiSet);
+    for (lv_obj_t *p : { progDefrost, progPreset, progFavourite }) {
+      lv_obj_align(p, LV_ALIGN_TOP_RIGHT, ICON_SLOT_X[wifiSet ? 2 : 1], 2);
+    }
+  }
 
   OvenState st = oven_->state();
   uint32_t secs = oven_->remainingSeconds();

@@ -9,7 +9,7 @@ public:
   void beep(uint8_t count, uint16_t onMs = 200, uint16_t offMs = 150);
   void click();                             // key feedback (off if Settings: key clicks off)
   void error() { beep(1, 600, 0); }         // action refused
-  void done() { beep(3, 200, 150); }        // cooking finished
+  void done() { beep(3, 1000, 150); }       // cooking finished: three 1 s beeps
   void update(uint32_t now);
 
 private:
