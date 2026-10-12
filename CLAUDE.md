@@ -48,6 +48,7 @@ The final MCU is not chosen yet; the leading candidate is the Waveshare ESP32-S3
 
 - GitHub: `origin` = https://github.com/geschwint/AEG_Micromat. **`master` is protected**: never commit to it; make a `feature/...` or `bug/...` branch, commit (only when the user asks), push, and open a pull request. `gh` is not installed here; the PR can be created with the GitHub REST API using the token from `git credential fill` (never print it).
 - **Always increase `FIRMWARE_VERSION`** (`Micromat/about.h`, `major.minor.build`) in the same pull request as any firmware change, and set `FIRMWARE_DATE` to that day: bug fix → build (1.0.0 → 1.0.1), feature → minor (→ 1.1.0), major rework (the user decides) → major (→ 2.0.0). Fixes and features together → minor. Documentation-only changes don't bump it.
+- **Every pull request updates `CHANGELOG.md`** in the same pull request: a new `## [x.y.z] – date` section (fingerprint and PR number below it; sections Added / Changed / Fixed / Documentation) for a firmware change, or `## [Unreleased]` for documentation only (moved into the next version when it comes). Plain language for the oven's user, newest first. Fill in the fingerprint from `tools\build.ps1`'s image name once the PR's final build is made.
 - **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`). `README.md` ("Versions and releases") has the same rules for people.
 
 ## Commands

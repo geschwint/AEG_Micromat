@@ -46,6 +46,8 @@ Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
 | `config/lv_conf.h` | Copy of the LVGL configuration (see "Setting up") |
 | `PLAN.md` | Decisions, safety principles, architecture, screens, phases |
 | `HARDWARE.md` | Pins, wiring, parts, measurements, eFuse key notes |
+| `ORIGINAL_HARDWARE.md`, `Original Hardware/` | The oven's original boards, reverse-engineered from photos |
+| `CHANGELOG.md` | What changed in each version, from the start of the project |
 | `CLAUDE.md` | Detailed technical notes, kept for Claude Code but readable by anyone |
 | `*.png`, `*.jpg` | Reference images (icon ideas, the oven's rating plate) |
 
@@ -94,6 +96,8 @@ Images in `firmware\` are not committed to git.
 A change with both fixes and features bumps the minor.
 
 `master` is protected: every change goes in through a pull request from a `feature/...` or `bug/...` branch, and the version bump is part of that pull request. **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`), and that branch is what gets built and installed.
+
+**Every pull request updates [CHANGELOG.md](CHANGELOG.md)** in the same pull request: under the new version's heading for a firmware change (Added / Changed / Fixed), or under "Unreleased" for documentation only; those entries move into the next version. Write for someone using the oven: what changed and why it matters, not which file.
 
 ## Installing
 
