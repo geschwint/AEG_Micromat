@@ -4,13 +4,15 @@ All notable changes to the Micromat controller, newest first. Versions follow `m
 
 Sections per version: **Added** (new features), **Changed** (behaviour that works differently), **Fixed** (bugs), **Documentation** (no firmware change).
 
+> **Pull request numbers:** the repository was republished on 2026-10-12, before it went public. Pull requests **#1–#8 up to and including version 1.0.2** (also the "(#n)" in those commit messages) were in the earlier repository and don't exist here; the commits and their messages are all kept. Numbering here starts again at #1: in the 1.0.2 section a pull request in this repository is written "new #n"; from the next version on, every number refers to this repository.
+
 ## [Unreleased]
 
 Nothing yet.
 
 ## [1.0.2] – 2026-10-12
 
-Fingerprint `730d4a2c`. Pull request #4; documentation added after the release in #5, #6 and #7 (same firmware).
+Fingerprint `730d4a2c`. Pull request #4; documentation added after the release in #5, #6 and #7 (earlier repository) and new #1 (same firmware).
 
 ### Documentation added after the release (same firmware `730d4a2c`)
 - `CHANGELOG.md` (this file), with the history back to the start of the project (#5).
@@ -18,6 +20,7 @@ Fingerprint `730d4a2c`. Pull request #4; documentation added after the release i
 - README: a "Why" section (the story behind the project); the original board switches its loads with triacs, not SCRs (#6).
 - Removed two reference images (`Heatwaves.png`, `MicrowaveIcons.png`) that came from a web search and may not be redistributed (#6).
 - The latest release branch is kept at the tip of `master`: documentation-only changes move it forward (#7).
+- Repository republished and made public: the two removed reference images are gone from the whole history, and commits carry a no-reply address; a note on the old pull request numbers (new #1).
 
 ### Fixed
 - Debug log: the first lines after a restart (firmware and build, reset reason, crash report, "settings: loaded") only went to USB serial, never to the SD card log. They are now kept in memory until the card is mounted and written to the log first.
