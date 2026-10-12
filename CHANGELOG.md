@@ -1,20 +1,23 @@
 # Changelog
 
-All notable changes to the Micromat controller, newest first. Versions follow `major.minor.build` (see [README.md](README.md#versions-and-releases)): a bug fix bumps the build, a feature the minor, a major rework the major. Each released version has a branch `releases/<version>`. The fingerprint is the build the oven shows in Menu → About, as installed when the version was released.
+All notable changes to the Micromat controller, newest first. Versions follow `major.minor.build` (see [README.md](README.md#versions-and-releases)): a bug fix bumps the build, a feature the minor, a major rework the major. Each released version has a branch `releases/<version>`; the latest one is kept at the tip of `master` (documentation-only changes after a release move it forward and are listed under that version). The fingerprint is the build the oven shows in Menu → About, as installed when the version was released.
 
 Sections per version: **Added** (new features), **Changed** (behaviour that works differently), **Fixed** (bugs), **Documentation** (no firmware change).
 
 ## [Unreleased]
 
-### Documentation
-- `CHANGELOG.md` (this file), with the history back to the start of the project.
-- License: GNU General Public License v3.0 (`LICENSE`), copyright Stefan Lindberg. The AEG name and logo are excluded (trademarks of their owner); the embedded Montserrat font keeps its SIL Open Font License.
-- README: a "Why" section (the story behind the project); the original board switches its loads with triacs, not SCRs.
-- Removed two reference images (`Heatwaves.png`, `MicrowaveIcons.png`) that came from a web search and may not be redistributed.
+Nothing yet.
 
 ## [1.0.2] – 2026-10-12
 
-Fingerprint `730d4a2c`. Pull request #4.
+Fingerprint `730d4a2c`. Pull request #4; documentation added after the release in #5, #6 and #7 (same firmware).
+
+### Documentation added after the release (same firmware `730d4a2c`)
+- `CHANGELOG.md` (this file), with the history back to the start of the project (#5).
+- License: GNU General Public License v3.0 (`LICENSE`), copyright Stefan Lindberg. The AEG name and logo are excluded (trademarks of their owner); the embedded Montserrat font keeps its SIL Open Font License (#6).
+- README: a "Why" section (the story behind the project); the original board switches its loads with triacs, not SCRs (#6).
+- Removed two reference images (`Heatwaves.png`, `MicrowaveIcons.png`) that came from a web search and may not be redistributed (#6).
+- The latest release branch is kept at the tip of `master`: documentation-only changes move it forward (#7).
 
 ### Fixed
 - Debug log: the first lines after a restart (firmware and build, reset reason, crash report, "settings: loaded") only went to USB serial, never to the SD card log. They are now kept in memory until the card is mounted and written to the log first.

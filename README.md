@@ -106,9 +106,9 @@ Images in `firmware\` are not committed to git.
 
 A change with both fixes and features bumps the minor.
 
-`master` is protected: every change goes in through a pull request from a `feature/...` or `bug/...` branch, and the version bump is part of that pull request. **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`), and that branch is what gets built and installed.
+`master` is protected: every change goes in through a pull request from a `feature/...` or `bug/...` branch, and the version bump is part of that pull request. **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`), and that branch is what gets built and installed. **The latest release branch is kept at the tip of `master`:** after a documentation-only pull request is merged, the latest `releases/<version>` is moved forward to `master` (a fast-forward, no history rewritten; the firmware and its fingerprint are unchanged). So checking out the latest release always gives the current documentation and license too.
 
-**Every pull request updates [CHANGELOG.md](CHANGELOG.md)** in the same pull request: under the new version's heading for a firmware change (Added / Changed / Fixed), or under "Unreleased" for documentation only; those entries move into the next version. Write for someone using the oven: what changed and why it matters, not which file.
+**Every pull request updates [CHANGELOG.md](CHANGELOG.md)** in the same pull request: under the new version's heading for a firmware change (Added / Changed / Fixed), or for documentation only under the latest version as "Documentation added after the release" (or under "Unreleased" while `master` holds firmware changes that aren't released yet). Write for someone using the oven: what changed and why it matters, not which file.
 
 ## Installing
 
