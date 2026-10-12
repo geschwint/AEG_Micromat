@@ -1403,3 +1403,7 @@ static const lv_image_dsc_t LOGO_AEG = {
   .reserved = nullptr,
   .reserved_2 = nullptr,
 };
+
+// The AEG name and logo are trademarks of their owner and NOT covered by this
+// project's GPL license (see README.md, "License"). (At the end of the file
+// so the lines above, and with them the build fingerprint, don't move.)

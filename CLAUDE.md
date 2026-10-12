@@ -8,6 +8,8 @@ Replacement controller for an AEG Micromat 143 microwave oven: an MCU board with
 
 Each subfolder is a separate sketch (folder name must match its `.ino` file, per Arduino convention). `Multitask_LAB/` is non-blocking LED flashing used as a base for running several timed tasks at once.
 
+License: **GPL v3** (`LICENSE`, copyright Stefan Lindberg; terms and exclusions in README "License"). The AEG name and logo (`Logo-940x520.avif`, `Micromat/logo_aeg.h`) are trademarks, not covered; the embedded Montserrat font stays under the SIL OFL. Only add images, fonts or code the project may redistribute (no pictures from web searches); note anything third-party in README "License".
+
 Safety rule for all code: door interlocks stay in hardware; software never runs the magnetron without the fan, and all relay outputs must default OFF (at boot, on reset, on door open).
 
 ## Target board
@@ -47,7 +49,7 @@ The final MCU is not chosen yet; the leading candidate is the Waveshare ESP32-S3
 ## Versions, branches and releases
 
 - GitHub: `origin` = https://github.com/geschwint/AEG_Micromat. **`master` is protected**: never commit to it; make a `feature/...` or `bug/...` branch, commit (only when the user asks), push, and open a pull request. `gh` is not installed here; the PR can be created with the GitHub REST API using the token from `git credential fill` (never print it).
-- **Always increase `FIRMWARE_VERSION`** (`Micromat/about.h`, `major.minor.build`) in the same pull request as any firmware change, and set `FIRMWARE_DATE` to that day: bug fix → build (1.0.0 → 1.0.1), feature → minor (→ 1.1.0), major rework (the user decides) → major (→ 2.0.0). Fixes and features together → minor. Documentation-only changes don't bump it.
+- **Always increase `FIRMWARE_VERSION`** (`Micromat/about.h`, `major.minor.build`) in the same pull request as any firmware change, and set `FIRMWARE_DATE` to that day: bug fix → build (1.0.0 → 1.0.1), feature → minor (→ 1.1.0), major rework (the user decides) → major (→ 2.0.0). Fixes and features together → minor. Documentation-only changes don't bump it. Note that **comments in firmware sources count** when they add or remove lines: the ELF's debug info holds line numbers, so the fingerprint changes (seen 2026-10-12: 3 comment lines in `logo_aeg.h` gave a new fingerprint; the same lines at the end of the file didn't).
 - **Every pull request updates `CHANGELOG.md`** in the same pull request: a new `## [x.y.z] – date` section (fingerprint and PR number below it; sections Added / Changed / Fixed / Documentation) for a firmware change, or `## [Unreleased]` for documentation only (moved into the next version when it comes). Plain language for the oven's user, newest first. Fill in the fingerprint from `tools\build.ps1`'s image name once the PR's final build is made.
 - **Releases are branched off `master`** at the commit with the wanted version, named `releases/<version>` (e.g. `releases/1.0.0`). `README.md` ("Versions and releases") has the same rules for people.
 

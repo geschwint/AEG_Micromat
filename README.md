@@ -1,8 +1,17 @@
 # AEG Micromat 143 – new controller
 
-A replacement controller for an **AEG Micromat 143E/U** microwave oven (type C71A000V, ELC 03). The original control board (a PIC microcontroller with relays and SCRs) failed: only Quick start and Stop still responded. This project replaces it with an ESP32-S3 board with a 2" touch display. It drives the oven's relays and reads the original panel buttons, a rotary encoder and a power knob. The high-voltage section (transformer, capacitor, diode, magnetron) and the door safety switches stay original.
+A replacement controller for an **AEG Micromat 143E/U** microwave oven (type C71A000V, ELC 03). The original control board (a PIC microcontroller with a relay and triacs) failed: only Quick start and Stop still responded. This project replaces it with an ESP32-S3 board with a 2" touch display. It drives the oven's relays and reads the original panel buttons, a rotary encoder and a power knob. The high-voltage section (transformer, capacitor, diode, magnetron) and the door safety switches stay original.
 
 > ⚠️ **Safety.** A microwave oven contains lethal voltages, and the high-voltage capacitor can stay charged after unplugging. Microwave radiation is dangerous. The door interlock switches stay in the mains path exactly as original; the software only *reads* the door. Never run the magnetron with an empty cavity (test with a cup of water). The safety principles are in [PLAN.md](PLAN.md#safety-principles).
+
+## Why
+
+Why bring an old, broken oven back to life? It wasn't completely dead; it just no longer responded when I tried to set the time or the power. In the end it came down to two choices:
+
+1. **New electronics and firmware.** Sounds fun, but a challenge: a quick search turned up no open-source firmware for it at all. The closest thing was a student project that controlled a microwave with a mix of hardware and software, partly inside and partly outside the oven. The original PIC firmware is proprietary, of course.
+2. **A new kitchen.** My kitchen is a non-standard width and this is a built-in oven, so a replacement has to fit in 47 cm. Modern built-in microwaves are 50 or 60 cm wide, and a cheap $30 countertop model won't do. Fitting a modern one means remodelling the kitchen, so the "new microwave" would end up costing $5,000 or more.
+
+To me the choice was easy: remod... no! New electronics and firmware. It's more fun, and the oven gets another 20+ years. If the electronics fail again, the fix is simple: get a new board, flash the firmware and off you go. And if I ever find a new microwave that fits my kitchen, I'll most likely rip out its electronics and put this controller in instead. Why are microwave user interfaces so bad, anyway?
 
 ## Status
 
@@ -49,7 +58,9 @@ Pin map, wiring notes and parts list: [HARDWARE.md](HARDWARE.md).
 | `ORIGINAL_HARDWARE.md`, `Original Hardware/` | The oven's original boards, reverse-engineered from photos |
 | `CHANGELOG.md` | What changed in each version, from the start of the project |
 | `CLAUDE.md` | Detailed technical notes, kept for Claude Code but readable by anyone |
-| `*.png`, `*.jpg` | Reference images (icon ideas, the oven's rating plate) |
+| `LICENSE` | GNU General Public License v3.0 (see "License") |
+| `AboutTheMicro.jpg` | Photo of the oven's rating plate |
+| `Logo-940x520.avif` | The AEG logo, source for `tools/make_logo.ps1` (not covered by the license; see "License") |
 
 ## Setting up (Windows)
 
@@ -112,3 +123,17 @@ A change with both fixes and features bumps the minor.
 
 - **Service screen:** hold Program for 5 seconds. It shows outputs, door, button voltages, encoder, pot, oven state, clock, loop timing, fan run-on, Wi-Fi and firmware.
 - **Serial console** (USB, 115200 baud): send any unknown text for a list of commands, e.g. `s` for status, `in` for raw input readings or `log` for the SD card log.
+
+## License
+
+Copyright (C) 2026 Stefan Lindberg
+
+This project is free software: you can redistribute it and/or modify it under the terms of the **GNU General Public License version 3** as published by the Free Software Foundation, or (at your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text.
+
+In short: you may use, change and share this firmware, also commercially, but anyone who distributes it or a modified version must do so under the GPL v3 and make the source code available.
+
+**Not covered by this license:**
+
+- **The AEG name and logo** are trademarks of their owner (AEG / Electrolux). The logo files (`Logo-940x520.avif` and the generated `Micromat/logo_aeg.h`) are included only so this oven can show its own brand; no rights to them are granted. This project is not affiliated with or endorsed by AEG or Electrolux. If you build this for another oven or share a modified version, remove the logo or replace it with your own.
+- **The Montserrat font** embedded in the firmware (`Micromat/font_montserrat_ttf.h`) is © The Montserrat Project Authors, under the [SIL Open Font License 1.1](https://openfontlicense.org).
+- **Libraries** used when building (LVGL, GFX Library for Arduino, the ESP32 Arduino core) are not part of this repository and keep their own licenses; `config/lv_conf.h` is LVGL's configuration template (MIT license), adapted.

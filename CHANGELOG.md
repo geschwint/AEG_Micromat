@@ -8,6 +8,9 @@ Sections per version: **Added** (new features), **Changed** (behaviour that work
 
 ### Documentation
 - `CHANGELOG.md` (this file), with the history back to the start of the project.
+- License: GNU General Public License v3.0 (`LICENSE`), copyright Stefan Lindberg. The AEG name and logo are excluded (trademarks of their owner); the embedded Montserrat font keeps its SIL Open Font License.
+- README: a "Why" section (the story behind the project); the original board switches its loads with triacs, not SCRs.
+- Removed two reference images (`Heatwaves.png`, `MicrowaveIcons.png`) that came from a web search and may not be redistributed.
 
 ## [1.0.2] – 2026-10-12
 
