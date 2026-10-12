@@ -19,16 +19,39 @@ static SPIClass sdSpi(FSPI);
 
 const char *DebugLog::fileName(uint8_t i) { return i < FILES ? FILE_NAMES[i] : ""; }
 
+// Start-up text kept until begin(); more than this is cut off (with a note).
+static constexpr size_t EARLY_BYTES = 4096;
+
 void DebugLog::begin(Clock &clock) {
   clock_ = &clock;
   if (!lock_) lock_ = xSemaphoreCreateMutex();
-  if (settings.debugLog) setEnabled(true);
+  if (settings.debugLog) setEnabled(true);  // writes the start-up text to the buffer first
+  early_ = false;
+  free(earlyBuf_);
+  earlyBuf_ = nullptr;
 }
 
 // --- Writing (any task) ----------------------------------------------------------------
 size_t DebugLog::write(const uint8_t *buf, size_t len) {
   Serial.write(buf, len);
-  if (!active_ || !buf_ || !lock_) return len;
+  if (early_) {  // only setup() runs this early: no lock needed
+    if (!earlyBuf_) earlyBuf_ = (char *)malloc(EARLY_BYTES);  // PSRAM (malloc prefers it, see crash_report.h)
+    if (earlyBuf_ && earlyLen_ < EARLY_BYTES) {
+      size_t n = min(len, EARLY_BYTES - earlyLen_);
+      memcpy(earlyBuf_ + earlyLen_, buf, n);
+      earlyLen_ += n;
+      if (n < len) dropped_ += len - n;
+    } else {
+      dropped_ += len;
+    }
+    return len;
+  }
+  if (active_) buffer(buf, len);
+  return len;
+}
+
+void DebugLog::buffer(const uint8_t *buf, size_t len) {
+  if (!buf_ || !lock_) return;
   xSemaphoreTake(lock_, portMAX_DELAY);
   auto put = [this](char c) {
     size_t next = (head_ + 1) % LOG_BUF_BYTES;
@@ -50,7 +73,6 @@ size_t DebugLog::write(const uint8_t *buf, size_t len) {
     lineStart_ = buf[i] == '\n';
   }
   xSemaphoreGive(lock_);
-  return len;
 }
 
 size_t DebugLog::take(char *out, size_t max) {
@@ -136,6 +158,13 @@ bool DebugLog::setEnabled(bool on) {
   lineStart_ = true;
   active_ = true;
   lastFlush_ = millis();
+  if (early_) {  // from begin(): the start-up text first (stamped now; the clock wasn't read yet then)
+    early_ = false;
+    if (earlyLen_) buffer((const uint8_t *)earlyBuf_, earlyLen_);
+    if (!lineStart_) buffer((const uint8_t *)"\n", 1);
+  } else {
+    dropped_ = 0;  // what was lost while logging was off doesn't count
+  }
   Log.printf("[%7lu] debug log: on, writing to %s (firmware %s)\n", millis(), FILE_NAMES[0], FIRMWARE_VERSION);
   return true;
 }

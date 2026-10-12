@@ -767,19 +767,24 @@ void uiUpdate() {
   lv_timer_handler();
 }
 
+// The widths are those of the chosen language, but the text shown is the
+// English one: the log is always English, no translations in it.
 void uiReportTexts(uint8_t language) {
   if (language >= (uint8_t)Language::Count) return;
   Language saved = settings.language;
-  settings.language = (Language)language;
   auto width = [](const char *s, const lv_font_t *f) {
     lv_point_t p;
     lv_text_get_size(&p, s, f, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
     return (long)p.x;
   };
-  Log.printf("texts %s: id w14 w20 w28 wbig text\n", languageName(language));
+  Log.printf("texts %u: id w14 w20 w28 wbig english-text (widths in language %u)\n", language, language);
   for (uint8_t i = 0; i < (uint8_t)Str::Count; i++) {
+    settings.language = (Language)language;
     const char *s = tr((Str)i);
-    Log.printf("T %u %ld %ld %ld %ld %s\n", i, width(s, font14), width(s, font20), width(s, font28), width(s, bigFont), s);  }
+    settings.language = Language::English;
+    Log.printf("T %u %ld %ld %ld %ld %s\n", i, width(s, font14), width(s, font20), width(s, font28), width(s, bigFont),
+               tr((Str)i));
+  }
   // Widest run-time values (menu rows, 20 px), for the label + value check.
   for (const char *s : { "255.255.255.255", "192.168.1.254", "44:BB:F6:85:DE:78" })
     Log.printf("V %ld %s\n", width(s, font20), s);

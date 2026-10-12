@@ -22,7 +22,8 @@ class DebugLog : public Print {
 public:
   static constexpr uint8_t FILES = 2;  // 0 = current, 1 = previous
 
-  void begin(Clock &clock);   // after loadSettings(); mounts the card if logging is on
+  void begin(Clock &clock);   // after loadSettings(); mounts the card if logging is on.
+                              // Text logged before this is kept and goes to the card first.
   void update(uint32_t now);  // writes buffered text to the card now and then
   bool setEnabled(bool on);   // from Settings; false if logging is on but no card was found
   bool active() const { return active_; }  // logging to the card right now
@@ -42,6 +43,7 @@ private:
   bool mount();
   void unmount();
   bool openCurrent();
+  void buffer(const uint8_t *buf, size_t len);  // into the RAM buffer, date and time at each line start
   size_t take(char *out, size_t max);  // from the RAM buffer
   void writeOut(size_t max);
   void fail(const char *what);
@@ -52,6 +54,11 @@ private:
   size_t head_ = 0, tail_ = 0;        // ring buffer: write at head_, read at tail_
   uint32_t dropped_ = 0;              // bytes lost because the buffer was full
   bool lineStart_ = true;
+  // Start-up text (firmware, reset reason, crash report...) logged before
+  // begin(), while it isn't known yet whether logging to the card is on.
+  bool early_ = true;
+  char *earlyBuf_ = nullptr;
+  size_t earlyLen_ = 0;
   bool mounted_ = false;
   bool active_ = false;
   File file_;
