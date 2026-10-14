@@ -113,6 +113,9 @@ constexpr uint32_t PAUSE_BLINK_MS   = 1000;    // paused: the remaining time bli
 constexpr uint32_t PAUSE_BLINK_ON_MS = 600;    // ...shown this long of it (starts shown; restarts on a change)
 constexpr uint32_t TOUCH_POLL_MS    = 30;
 constexpr int32_t BIG_DIGIT_PX      = 77;      // big digit font size (Tiny TTF)
+// Easter eggs (eggs.h): door open, hold Rotate at least MIN, release before MAX.
+constexpr uint32_t EGG_HOLD_MIN_MS  = 10000;
+constexpr uint32_t EGG_HOLD_MAX_MS  = 14000;
 
 // --- Debug log on the SD card (debug_log.h) -----------------------------------
 constexpr uint32_t LOG_FLUSH_MS    = 5000;             // buffered text goes to the card this often

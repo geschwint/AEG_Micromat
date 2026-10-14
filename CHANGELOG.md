@@ -10,6 +10,19 @@ Sections per version: **Added** (new features), **Changed** (behaviour that work
 
 Nothing yet.
 
+## [1.1.0] – 2026-10-14
+
+Fingerprint `b19712d8`. Pull request #2.
+
+### Added
+- Easter eggs: a hidden menu, opened with the door open and the oven idle by holding Rotate for 10–14 seconds (let go before 14 s; held longer, nothing happens). While it's open, closing the door restarts the oven. Eggs that are settings are kept; the others are forgotten at the restart.
+  - **End melody:** the oven plays the opening of Für Elise instead of three beeps when the time is up. It stays on until switched off in the egg menu, or until any sound setting (volume, key clicks) is changed.
+  - **Authors:** the names Geschwint and Claude bounce around the screen, changing colour at every wall, until any button, turn or touch.
+- Console: `egg` (as the long Rotate press; the door must be open) and `egg melody on|off`.
+
+### Fixed
+- A relay that was on when the controller restarted by itself (the easter-egg restart, but also a watchdog or crash restart) came back on after the restart, while the controller showed it as off. Found with the lamp, which stayed on in sleep mode. Every output is now really switched off at start-up. Switching the power on and a USB reset were not affected.
+
 ## [1.0.2] – 2026-10-12
 
 Fingerprint `730d4a2c`. Pull request #4; documentation added after the release in #5, #6 and #7 (earlier repository) and new #1 (same firmware).

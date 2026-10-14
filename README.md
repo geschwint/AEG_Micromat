@@ -15,7 +15,7 @@ To me the choice was easy: remod... no! New electronics and firmware. It's more 
 
 ## Status
 
-**Version 1.0.2 (2026-10-12):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+**Version 1.1.0 (2026-10-14):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
 
 ## What it does
 
@@ -31,6 +31,7 @@ To me the choice was easy: remod... no! New electronics and firmware. It's more 
 - **Wi-Fi (optional, off by default):** set up from a phone via the oven's own temporary network and a QR code. Wi-Fi is only on briefly for the daily time sync, and while the firmware update or log download screen is open; that screen shows the oven's address on your home network ("On your network: …"). Menu → About shows the network, the IP address (or the last one used) and the MAC address. The Wi-Fi password is stored encrypted with a key from the chip's eFuses. That key has to be created once per board, and that step is permanent (done on the current board, 2026-10-11); see [HARDWARE.md](HARDWARE.md#efuse-key-for-the-wi-fi-password-created-2026-10-11).
 - **Firmware update over Wi-Fi** from a browser, with automatic rollback if the new firmware doesn't start properly.
 - **Debug log (optional):** with a microSD card in the board's slot, Settings → Debug log → Logging writes the log to the card with date and time. Download the files from a phone or PC via Settings → Debug log → Download (the oven's own network and a password, like a firmware update). The log is always in English, whatever language the oven is set to, and starts with the start-up lines (firmware, reset reason), useful after an unexpected restart. Tested with a 16 GB card.
+- **Easter eggs:** a hidden menu with a few surprises, such as a melody when the time is up. How to find it is left as a puzzle (the code is open, so the answer is in there too).
 
 ## Hardware
 

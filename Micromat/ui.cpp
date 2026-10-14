@@ -405,6 +405,60 @@ static void buildServiceView(lv_obj_t *scr) {
   lv_obj_align(serviceHint, LV_ALIGN_BOTTOM_MID, 0, -6);
 }
 
+// Easter egg: the authors' names bounce around the screen like the old DVD
+// logo, each changing colour when it hits a wall. Positions in 1/16 px so
+// slow, uneven speeds still look smooth at one step per refresh (33 ms).
+static lv_obj_t *bounceView;
+struct Bouncer {
+  const char *name;
+  int32_t x, y, vx, vy;  // 1/16 px, and 1/16 px per refresh
+  uint8_t color;
+  lv_obj_t *label;
+  int32_t w, h;          // label size in px
+};
+static Bouncer bouncers[] = {
+  { "Geschwint", 20 << 4, 40 << 4, 47, 33, 0, nullptr, 0, 0 },
+  { "Claude", 180 << 4, 150 << 4, -38, -44, 3, nullptr, 0, 0 },
+};
+static constexpr uint32_t BOUNCE_COLORS[] = { C_ORANGE, C_ICE, C_GREEN, C_AMBER, C_AEG_RED, C_WHITE, C_YELLOW };
+static constexpr uint8_t NUM_BOUNCE_COLORS = sizeof(BOUNCE_COLORS) / sizeof(BOUNCE_COLORS[0]);
+
+static void buildBounceView(lv_obj_t *scr) {
+  bounceView = makeView(scr);
+  for (Bouncer &b : bouncers) {
+    b.label = makeLabel(bounceView, font28, BOUNCE_COLORS[b.color]);
+    lv_label_set_text(b.label, b.name);
+    lv_obj_update_layout(b.label);
+    b.w = lv_obj_get_width(b.label);
+    b.h = lv_obj_get_height(b.label);
+    lv_obj_set_pos(b.label, b.x >> 4, b.y >> 4);
+  }
+}
+
+static void refreshBounce() {
+  for (Bouncer &b : bouncers) {
+    bool hit = false;
+    b.x += b.vx;
+    b.y += b.vy;
+    int32_t maxX = (SCREEN_W - b.w) << 4, maxY = (SCREEN_H - b.h) << 4;
+    if (b.x < 0 || b.x > maxX) {
+      b.x = constrain(b.x, 0, maxX);
+      b.vx = -b.vx;
+      hit = true;
+    }
+    if (b.y < 0 || b.y > maxY) {
+      b.y = constrain(b.y, 0, maxY);
+      b.vy = -b.vy;
+      hit = true;
+    }
+    if (hit) {
+      b.color = (b.color + 1) % NUM_BOUNCE_COLORS;
+      setColor(b.label, BOUNCE_COLORS[b.color]);
+    }
+    lv_obj_set_pos(b.label, b.x >> 4, b.y >> 4);  // LVGL skips the redraw when the position is the same
+  }
+}
+
 // --- Refresh ------------------------------------------------------------------------
 static void formatClock(char *buf, size_t len) {
   if (clock_->valid()) strftime(buf, len, "%H:%M", &clock_->local());
@@ -556,7 +610,7 @@ static void refreshMenu() {
     setText(menuValues[r], value);
   }
   setY(menuHighlight, MENU_ROW_Y0 + (sel - first) * MENU_ROW_H + 2);
-  setHint(menuHint, Str::MenuHint);
+  setHint(menuHint, app_->menuHint());
 }
 
 static void refreshEdit() {
@@ -703,7 +757,7 @@ static void refresh(lv_timer_t *) {
   Screen s = app_->screen();
   if (app_->splash()) {  // over everything else until it ends
     setHidden(splashView, false);
-    for (lv_obj_t *v : { mainView, dimView, menuView, editView, serviceView, wifiView }) setHidden(v, true);
+    for (lv_obj_t *v : { mainView, dimView, menuView, editView, serviceView, wifiView, bounceView }) setHidden(v, true);
     return;
   }
   setHidden(splashView, true);
@@ -714,6 +768,7 @@ static void refresh(lv_timer_t *) {
   setHidden(editView, s != Screen::Edit);
   setHidden(serviceView, s != Screen::Service);
   setHidden(wifiView, s != Screen::WifiSetup && s != Screen::Update);
+  setHidden(bounceView, s != Screen::Bounce);
 
   if (dim) refreshDim();
   else if (s == Screen::Main) refreshMain();
@@ -721,6 +776,7 @@ static void refresh(lv_timer_t *) {
   else if (s == Screen::Edit) refreshEdit();
   else if (s == Screen::WifiSetup) refreshHotspotView(false);
   else if (s == Screen::Update) refreshHotspotView(true);
+  else if (s == Screen::Bounce) refreshBounce();
   else refreshService();
 }
 
@@ -757,6 +813,7 @@ void uiBegin(Arduino_GFX *gfx, App &app, Oven &oven, Door &door, Clock &clock, O
   buildMenuView(scr);
   buildEditView(scr);
   buildServiceView(scr);
+  buildBounceView(scr);
   buildWifiView(scr);
 
   lv_timer_create(refresh, 33, nullptr);

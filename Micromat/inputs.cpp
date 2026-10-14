@@ -63,7 +63,10 @@ void Inputs::pressKey(PanelKey k, uint32_t now, bool corrected) {
   switch (k) {
     case PanelKey::Stop:       emit(InputEvent::Stop); break;
     case PanelKey::QuickStart: emit(InputEvent::QuickStart); break;
-    case PanelKey::Rotate:     emit(InputEvent::Rotate); break;
+    case PanelKey::Rotate:
+      rotateDownAt_ = now;
+      emit(InputEvent::Rotate);
+      break;
     case PanelKey::Program:
       programDownAt_ = now;
       holdFired_ = false;
@@ -104,6 +107,11 @@ void Inputs::update(uint32_t now) {
     if (keyStable_ == PanelKey::None) {  // released
       if (pressKey_ == PanelKey::None && pending_ != PanelKey::None) pressKey(pending_, now, false);  // short tap
       if (pressKey_ == PanelKey::Program && !holdFired_) emit(InputEvent::Program);
+      if (pressKey_ == PanelKey::Rotate) {
+        uint32_t held = now - rotateDownAt_;
+        if (held >= EGG_HOLD_MIN_MS) Log.printf("[%7lu] KEY Rotate held %lu ms\n", now, (unsigned long)held);
+        if (held >= EGG_HOLD_MIN_MS && held < EGG_HOLD_MAX_MS) emit(InputEvent::RotateLong);
+      }
       Log.printf("[%7lu] KEY released (lowest %u mV)\n", now, pressMinMv_);
       pending_ = pressKey_ = PanelKey::None;
       pressMinMv_ = 0;

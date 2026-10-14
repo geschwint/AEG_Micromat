@@ -125,6 +125,10 @@ static const char *const ENGLISH[] = {
   "Last IP",                                    // AboutLastIp
   "MAC",                                        // AboutMac
   "Connected",                                  // Connected
+  "Easter eggs",                                // EasterEggs
+  "End melody",                                 // EggMelody
+  "Authors",                                    // EggAuthors
+  "Stop: back   Close the door: restart",       // EggHint
 };
 
 static const char *const SWEDISH[] = {
@@ -251,6 +255,10 @@ static const char *const SWEDISH[] = {
   "Senaste IP",                                 // AboutLastIp
   "MAC",                                        // AboutMac
   "Ansluten",                                   // Connected
+  "Påskägg",                                    // EasterEggs
+  "Slutmelodi",                                 // EggMelody
+  "Upphovsmän",                                 // EggAuthors
+  "Stop: tillbaka   Stäng luckan: omstart",     // EggHint
 };
 
 static const char *const GERMAN[] = {
@@ -377,6 +385,10 @@ static const char *const GERMAN[] = {
   "Letzte IP",                                  // AboutLastIp
   "MAC",                                        // AboutMac
   "Verbunden",                                  // Connected
+  "Ostereier",                                  // EasterEggs
+  "Endmelodie",                                 // EggMelody
+  "Autoren",                                    // EggAuthors
+  "Stop: zurück   Tür zu: Neustart",            // EggHint
 };
 
 static const char *const FRENCH[] = {
@@ -503,6 +515,10 @@ static const char *const FRENCH[] = {
   "Dernière IP",                                // AboutLastIp
   "MAC",                                        // AboutMac
   "Connecté",                                   // Connected
+  "Œufs de Pâques",                             // EasterEggs
+  "Mélodie de fin",                             // EggMelody
+  "Auteurs",                                    // EggAuthors
+  "Stop : retour   Fermer : redémarrer",        // EggHint
 };
 
 static const char *const SPANISH[] = {
@@ -629,6 +645,10 @@ static const char *const SPANISH[] = {
   "Última IP",                                  // AboutLastIp
   "MAC",                                        // AboutMac
   "Conectado",                                  // Connected
+  "Huevos de Pascua",                           // EasterEggs
+  "Melodía final",                              // EggMelody
+  "Autores",                                    // EggAuthors
+  "Stop: atrás   Cerrar puerta: reinicio",      // EggHint
 };
 
 static_assert(sizeof(ENGLISH) / sizeof(ENGLISH[0]) == (size_t)Str::Count, "ENGLISH table must match Str");

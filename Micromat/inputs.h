@@ -13,6 +13,7 @@ enum class InputEvent : uint8_t {
   Rotate,       // on press
   Program,      // on release, if released before SERVICE_HOLD_MS
   ProgramHold,  // Program held for SERVICE_HOLD_MS
+  RotateLong,   // Rotate released after EGG_HOLD_MIN_MS..EGG_HOLD_MAX_MS (easter eggs; Rotate fired on press too)
   EncoderTurn,  // value = clicks, positive = clockwise
   EncoderPush,  // on press
   PotPower,     // value = power in watts; sent when the pot moves into another band (and once at start)
@@ -25,6 +26,7 @@ public:
   void begin(InputHandler handler);
   void update(uint32_t now);
   void printRaw() const;  // diagnostics for the serial console
+  void inject(InputEvent e, int32_t value = 0) { emit(e, value); }  // serial console tests
   static const char *keyName(PanelKey k);
 
   // Raw state for the service screen
@@ -51,6 +53,7 @@ private:
   uint32_t pendingSince_ = 0;
   uint16_t pressMinMv_ = 0;            // lowest reading during the press (diagnostics)
   uint32_t programDownAt_ = 0;
+  uint32_t rotateDownAt_ = 0;
   bool holdFired_ = false;
 
   bool swStable_ = false, swCandidate_ = false;  // true = pressed
