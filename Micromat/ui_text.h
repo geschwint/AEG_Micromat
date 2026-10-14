@@ -133,6 +133,11 @@ enum class Str : uint8_t {
   AboutLastIp,      // ... the last one used (Wi-Fi off)
   AboutMac,
   Connected,
+  // Easter eggs (eggs.h)
+  EasterEggs,
+  EggMelody,
+  EggAuthors,
+  EggHint,
   Count
 };
 

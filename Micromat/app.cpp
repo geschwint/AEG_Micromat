@@ -11,6 +11,7 @@
 #include <WiFi.h>
 #include "wifi_creds.h"
 #include "wifi_setup.h"
+#include "eggs.h"
 #include <lvgl.h>  // LV_SYMBOL_OK only
 
 static constexpr uint32_t TURN_TOAST_MS = 8000;
@@ -34,6 +35,8 @@ static const Str CLOCK_ROWS[] = { Str::SetTime, Str::AutoTime };
 static const Str SOUND_ROWS[] = { Str::KeyClicks, Str::Volume };
 static const Str WIFI_ROWS[] = { Str::Wifi, Str::Network, Str::ForgetNetwork };
 static const Str DEBUG_LOG_ROWS[] = { Str::Logging, Str::DownloadLogs };
+// Easter eggs (eggs.h): lasting eggs show On/Off, momentary ones start when selected.
+static const Str EGG_ROWS[] = { Str::EggMelody, Str::EggAuthors };
 template <size_t N> static constexpr uint8_t count(const Str (&)[N]) { return N; }
 
 struct MenuInfo {
@@ -53,6 +56,7 @@ static const MenuInfo MENUS[] = {
   { Str::Wifi, MenuId::Settings, 6 },                              // Wifi
   { Str::About, MenuId::Root, 3 },                                 // About
   { Str::DebugLog, MenuId::Settings, 7 },                          // DebugLog
+  { Str::EasterEggs, MenuId::Root, 0 },                            // Eggs (hidden; back closes the menu)
   { Str::Brightness, MenuId::Settings, 1 },                        // Brightness
   { Str::DimLevel, MenuId::Settings, 2 },                          // DimLevel
   { Str::DimDelay, MenuId::Settings, 3 },                          // DimDelay
@@ -135,8 +139,8 @@ void App::choiceApply(MenuId id, uint8_t i) {
     case MenuId::Brightness: settings.brightness = i; break;
     case MenuId::DimLevel:   settings.dimLevel = i; break;
     case MenuId::DimDelay:   settings.dimDelay = i; break;
-    case MenuId::KeyClicks:  settings.keyClicks = i == 0; break;
-    case MenuId::Volume:     settings.volume = i; break;
+    case MenuId::KeyClicks:  settings.keyClicks = i == 0; eggsSoundSettingChanged(); break;
+    case MenuId::Volume:     settings.volume = i; eggsSoundSettingChanged(); break;
     case MenuId::Language:   settings.language = (Language)i; break;
     case MenuId::AutoTime:
       settings.autoTime = i == 0;
@@ -232,6 +236,7 @@ uint8_t App::menuCount() const {
     case MenuId::Sound:         return count(SOUND_ROWS);
     case MenuId::Wifi:          return count(WIFI_ROWS);
     case MenuId::DebugLog:      return count(DEBUG_LOG_ROWS);
+    case MenuId::Eggs:          return count(EGG_ROWS);
     case MenuId::About:         return count(ABOUT_ROWS);
     default:                    return choiceCount(menuId_);
   }
@@ -291,6 +296,10 @@ void App::menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t v
     case MenuId::DebugLog:
       snprintf(label, labelLen, "%s", tr(DEBUG_LOG_ROWS[i]));
       if (i == 0) choiceLabel(MenuId::DebugLogOn, choiceCurrent(MenuId::DebugLogOn), value, valueLen);
+      break;
+    case MenuId::Eggs:
+      snprintf(label, labelLen, "%s", tr(EGG_ROWS[i]));
+      if (EGG_ROWS[i] == Str::EggMelody) snprintf(value, valueLen, "%s", tr(eggs.melody ? Str::On : Str::Off));
       break;
     case MenuId::About:
       snprintf(label, labelLen, "%s", tr(ABOUT_ROWS[i] == Str::AboutIp && !wifiConnected() ? Str::AboutLastIp : ABOUT_ROWS[i]));
@@ -463,7 +472,7 @@ void App::closeMenu() {
 }
 
 void App::menuBack() {
-  if (menuId_ == MenuId::Root) {
+  if (menuId_ == MenuId::Root || menuId_ == MenuId::Eggs) {
     buzzer_->click();
     closeMenu();
     return;
@@ -549,6 +558,19 @@ void App::menuSelect() {
     case MenuId::DebugLog:
       if (i == 0) openMenu(MenuId::DebugLogOn, choiceCurrent(MenuId::DebugLogOn));
       else startUpdate(true);
+      break;
+    case MenuId::Eggs:
+      if (EGG_ROWS[i] == Str::EggMelody) {  // lasting: kept in flash, survives the restart
+        eggs.melody = !eggs.melody;
+        saveEggs();
+        Log.printf("[%7lu] eggs: end melody %s\n", millis(), eggs.melody ? "on" : "off");
+        if (eggs.melody) buzzer_->playEndMelody();  // a preview
+        else buzzer_->click();
+      } else {  // momentary: until any input, forgotten at the restart
+        Log.printf("[%7lu] eggs: bouncing authors\n", millis());
+        buzzer_->click();
+        screen_ = Screen::Bounce;
+      }
       break;
     case MenuId::Wifi:
       if (i == 0) {
@@ -741,7 +763,19 @@ void App::onInput(InputEvent e, int32_t value) {
     return;
   }
 
+  if (e == InputEvent::RotateLong) {
+    // Easter eggs: only with the door open, not while a Wi-Fi screen holds the
+    // radio, and not with a paused cook (the restart on closing would lose it).
+    OvenState st = oven_->state();
+    if (!door_->closed() && screen_ != Screen::WifiSetup && screen_ != Screen::Update &&
+        (st == OvenState::Idle || st == OvenState::Done)) {
+      enterEggs();
+    }
+    return;
+  }
+
   switch (screen_) {
+    case Screen::Bounce:  bounceInput(e); break;
     case Screen::Main:    mainInput(e, value); break;
     case Screen::Menu:    menuInput(e, value); break;
     case Screen::Edit:    editInput(e, value); break;
@@ -788,6 +822,21 @@ void App::menuInput(InputEvent e, int32_t value) {
   }
 }
 
+// The long press started with a normal Rotate press, which toggled rotate:
+// toggle it back, then open the egg menu. From now on closing the door restarts.
+void App::enterEggs() {
+  Log.printf("[%7lu] eggs: menu open (closing the door restarts)\n", millis());
+  oven_->toggleRotate();
+  eggMode_ = true;
+  openMenu(MenuId::Eggs);
+}
+
+// Bouncing authors: any button or encoder input goes back to the egg menu.
+void App::bounceInput(InputEvent e) {
+  if (e == InputEvent::PotPower) return;
+  openMenu(MenuId::Eggs, 1);
+}
+
 void App::serviceInput(InputEvent e) {
   switch (e) {
     case InputEvent::Stop:
@@ -827,6 +876,8 @@ void App::onTouch(int16_t x, int16_t y) {
     if (y < MENU_ROW_Y0) leaveWifiSetup();
   } else if (screen_ == Screen::Update) {
     if (y < MENU_ROW_Y0 && firmwareUpdate.state() != FirmwareUpdate::State::Done) leaveUpdate();
+  } else if (screen_ == Screen::Bounce) {
+    openMenu(MenuId::Eggs, 1);
   } else if (screen_ == Screen::Service && door_->simulated()) {
     door_->simulate(!door_->closed());
   }
@@ -857,6 +908,11 @@ void App::update(uint32_t now) {
   // Door and oven state changes count as use and bring the main screen back.
   if (door_->closed() != lastDoorClosed_) {
     lastDoorClosed_ = door_->closed();
+    if (eggMode_ && lastDoorClosed_) {  // leaving egg mode: momentary eggs are forgotten, saved ones stay
+      Log.printf("[%7lu] eggs: door closed, restarting\n", now);
+      Log.flushNow();
+      ESP.restart();
+    }
     splash_ = false;
     use();
     closeMenu();

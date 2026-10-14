@@ -4,6 +4,7 @@
 #include "perf.h"
 #include "settings.h"
 #include "wifi_creds.h"
+#include "eggs.h"
 #include "ui.h"
 #include <esp_heap_caps.h>
 
@@ -12,6 +13,7 @@ static const char *HELP =
   "          rot | open | close | s (status) | in (raw inputs) | perf (loop timing) | mem | crash (last crash) | crash clear | T YYYY-MM-DD HH:MM:SS (set RTC, UTC)\n"
   "          ssid NAME | pass PASSWORD (Wi-Fi network, password saved encrypted) | forget | wifi (status, sync now)\n"
   "          log (debug log status) | log on | log off (debug log on the SD card)\n"
+  "          egg (as the long Rotate press; door open) | egg melody on | egg melody off\n"
   "          keygen (create the eFuse encryption key, once per chip)";
 
 static void printStatus(Oven &oven, Door &door, Clock &clock, Outputs &outputs) {
@@ -78,6 +80,12 @@ static void run(const String &cmd, Oven &oven, Door &door, Clock &clock, Outputs
                card ? "ok" : "MISSING");
     for (uint8_t i = 0; card && i < DebugLog::FILES; i++) Log.printf(", %s %u bytes", DebugLog::fileName(i), (unsigned)Log.fileSize(i));
     Log.println();
+  } else if (cmd == "egg") {  // as the long Rotate press (still needs the door open)
+    inputs.inject(InputEvent::RotateLong);
+  } else if (cmd == "egg melody on" || cmd == "egg melody off") {
+    eggs.melody = cmd.endsWith("on");
+    saveEggs();
+    Log.printf("eggs: end melody %s\n", eggs.melody ? "on" : "off");
   } else if (cmd.startsWith("texts ")) {
     uiReportTexts(cmd.substring(6).toInt());
   } else if (cmd == "keygen") {

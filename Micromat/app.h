@@ -17,6 +17,8 @@
 // Settings -> Firmware update the update screen (fw_update.h; only when idle,
 // and nothing can start cooking while it's open); Settings -> Debug log ->
 // Download the same screen for the log files on the SD card.
+// Easter eggs (eggs.h): a hidden menu, opened with a long Rotate press while
+// the door is open; closing the door then restarts the board.
 #pragma once
 #include <Arduino.h>
 #include "inputs.h"
@@ -28,10 +30,10 @@
 #include "ui_text.h"
 #include "config.h"
 
-enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup, Update };
+enum class Screen : uint8_t { Main, Menu, Edit, Service, WifiSetup, Update, Bounce };  // Bounce: easter egg
 // Choice lists come last (isChoice() relies on that order).
 enum class MenuId : uint8_t {
-  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi, About, DebugLog,
+  Root, Defrost, Programs, SaveFavourite, Settings, Clock, Sound, Wifi, About, DebugLog, Eggs,
   Brightness, DimLevel, DimDelay, KeyClicks, Volume, Language, AutoTime, WifiOn, DebugLogOn
 };
 enum class EditId : uint8_t { DefrostWeight, ClockTime };
@@ -53,6 +55,7 @@ public:
   Screen screen() const { return screen_; }
   bool dimmed() const { return dimmed_; }
   bool splash() const { return splash_; }  // start-up splash (logo, model, firmware) still showing
+  bool eggMode() const { return eggMode_; }
   bool powerView() const;  // the knob just moved: main screen shows the watts big
   uint8_t backlightPercent() const;  // includes the live preview while choosing brightness
   const char *toast() const;         // short message, or nullptr
@@ -61,6 +64,7 @@ public:
   bool programText(char *buf, size_t len) const;  // loaded program, e.g. "Meat 500 g"
 
   const char *menuTitle() const;
+  Str menuHint() const { return menuId_ == MenuId::Eggs ? Str::EggHint : Str::MenuHint; }
   uint8_t menuCount() const;
   void menuRow(uint8_t i, char *label, size_t labelLen, char *value, size_t valueLen) const;
   uint8_t menuIndex() const { return menuIndex_; }
@@ -98,6 +102,8 @@ private:
   void startUpdate(bool logs = false);  // logs: Settings -> Debug log -> Download
   void leaveUpdate();
   void updateInput(InputEvent e);
+  void enterEggs();
+  void bounceInput(InputEvent e);
   void onTouch(int16_t x, int16_t y);
 
   Oven *oven_ = nullptr;
@@ -140,6 +146,7 @@ private:
   Str toast_ = Str::Saved;
   uint32_t toastUntil_ = 0;
 
+  bool eggMode_ = false;  // easter-egg menu was opened: closing the door restarts the board
   bool lastDoorClosed_ = true;
   OvenState lastState_ = OvenState::Idle;
   uint32_t lastTouchPoll_ = 0;

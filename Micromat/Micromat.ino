@@ -17,6 +17,7 @@
 #include "clock.h"
 #include "inputs.h"
 #include "app.h"
+#include "eggs.h"
 #include "settings.h"
 #include "about.h"
 #include "fw_update.h"
@@ -73,6 +74,7 @@ void setup() {
   crashReportLog(false);  // reset reason; the last crash, if one was saved
 
   loadSettings();  // before anything that uses them (buzzer volume, UI language, ...)
+  loadEggs();      // easter eggs kept in flash (the end melody)
   credsBegin();    // Wi-Fi network store; also stops the Wi-Fi driver keeping a plain-text copy
   buzzer.begin();
   door.begin();
