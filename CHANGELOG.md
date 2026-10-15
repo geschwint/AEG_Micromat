@@ -12,7 +12,7 @@ Nothing yet.
 
 ## [1.2.0] – 2026-10-15
 
-Fingerprint `e17d693a`. Pull request #3.
+Fingerprint `e17d693a`. Pull request #4.
 
 ### Changed
 - The volume setting (Settings → Sound → Volume) no longer applies to the signal when the time is up: the three beeps, or the end melody, always sound at full volume, so a low volume for the key clicks doesn't make the end easy to miss. Everything else (key clicks, the refused-action beep, the "turn the food" beeps when defrosting) follows the setting as before.
