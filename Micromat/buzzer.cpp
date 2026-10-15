@@ -27,7 +27,8 @@ void Buzzer::begin() {
 
 void Buzzer::sound(bool on) {
   on_ = on;
-  ledcWrite(PIN_BUZZER, on ? VOLUME_DUTY[settings.volume] : 0);  // up to a 50 % square wave, or silent
+  uint16_t duty = full_ ? VOLUME_DUTY[NUM_VOLUME - 1] : VOLUME_DUTY[settings.volume];
+  ledcWrite(PIN_BUZZER, on ? duty : 0);  // up to a 50 % square wave, or silent
 }
 
 void Buzzer::setFreq(uint16_t hz) {
@@ -38,6 +39,7 @@ void Buzzer::setFreq(uint16_t hz) {
 
 void Buzzer::beep(uint8_t count, uint16_t onMs, uint16_t offMs) {
   notes_ = nullptr;  // a beep cuts a melody short
+  full_ = false;
   sound(false);
   setFreq(BEEP_FREQ_HZ);
   remaining_ = count;
@@ -49,6 +51,7 @@ void Buzzer::beep(uint8_t count, uint16_t onMs, uint16_t offMs) {
 
 void Buzzer::melody(const Note *notes, uint8_t count) {
   sound(false);
+  full_ = false;
   remaining_ = 0;
   notes_ = notes;
   noteCount_ = count;
@@ -109,9 +112,14 @@ void Buzzer::click() {
 
 void Buzzer::playEndMelody() {
   melody(FUR_ELISE, sizeof(FUR_ELISE) / sizeof(FUR_ELISE[0]));
+  full_ = true;
 }
 
 void Buzzer::done() {
-  if (eggs.melody) playEndMelody();
-  else beep(3, 1000, 150);
+  if (eggs.melody) {
+    playEndMelody();
+  } else {
+    beep(3, 1000, 150);
+    full_ = true;
+  }
 }
