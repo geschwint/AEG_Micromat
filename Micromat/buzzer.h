@@ -1,5 +1,6 @@
 // Non-blocking buzzer: start a beep pattern or a melody and it plays in the
-// background while update() is called from loop(). Volume comes from Settings.
+// background while update() is called from loop(). Volume comes from Settings,
+// except for the done signal (beeps or melody), which is always at full volume.
 #pragma once
 #include <Arduino.h>
 
@@ -15,8 +16,8 @@ public:
   void melody(const Note *notes, uint8_t count);  // `notes` must stay valid (static)
   void click();                             // key feedback (off if Settings: key clicks off)
   void error() { beep(1, 600, 0); }         // action refused
-  void done();                              // cooking finished: three 1 s beeps, or the melody egg
-  void playEndMelody();                     // the melody egg's tune (also as a preview)
+  void done();                              // cooking finished: three 1 s beeps, or the melody egg (full volume)
+  void playEndMelody();                     // the melody egg's tune (also as a preview; full volume)
   void update(uint32_t now);
 
 private:
@@ -33,4 +34,5 @@ private:
   uint8_t noteCount_ = 0, noteIndex_ = 0;
   enum class Phase : uint8_t { Note, Gap } phase_ = Phase::Gap;
   uint16_t freq_ = 0;
+  bool full_ = false;  // the done signal: full volume whatever Settings says
 };

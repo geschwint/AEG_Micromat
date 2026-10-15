@@ -15,7 +15,7 @@ To me the choice was easy: remod... no! New electronics and firmware. It's more 
 
 ## Status
 
-**Version 1.1.0 (2026-10-14):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+**Version 1.2.0 (2026-10-15):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
 
 ## What it does
 
