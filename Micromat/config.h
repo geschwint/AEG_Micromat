@@ -39,7 +39,12 @@ constexpr uint8_t  INPUT_STABLE_COUNT  = 3;   // identical polls before a button
 // of higher keys (Rotate -> Program -> Quick start -> Stop). A ladder key acts
 // only after its reading has settled this long; the lowest key seen wins.
 constexpr uint32_t LADDER_SETTLE_MS    = 60;
-constexpr int8_t   ENC_STEPS_PER_DETENT = 2;  // measured: 2 quadrature steps per click
+// Encoder type: quadrature steps (A/B edges) per click. The bench encoder gives
+// one pulse per click = half an A/B cycle = 2 steps (measured); the oven's
+// 2-bit quadrature encoder gives 2 pulses per click = a full cycle = 4 steps.
+constexpr int8_t   ENC_STEPS_ONE_PULSE  = 2;  // bench encoder
+constexpr int8_t   ENC_STEPS_TWO_PULSES = 4;  // the oven's encoder
+constexpr int8_t   ENC_STEPS_PER_DETENT = ENC_STEPS_TWO_PULSES;
 constexpr int8_t   ENC_DIRECTION        = 1;  // set to -1 if clockwise decreases the time
 // Encoder acceleration when setting the time: the turning speed (clicks per
 // second, smoothed) gives a multiplier for the steps per click. Slow turning

@@ -34,6 +34,7 @@ void Inputs::begin(InputHandler handler) {
   encState = (digitalRead(PIN_ENC_A) << 1) | digitalRead(PIN_ENC_B);
   attachInterrupt(PIN_ENC_A, onEncoder, CHANGE);
   attachInterrupt(PIN_ENC_B, onEncoder, CHANGE);
+  Log.printf("encoder: %d quadrature steps per click\n", ENC_STEPS_PER_DETENT);
   analogReadResolution(12);
 }
 

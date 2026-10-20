@@ -15,11 +15,11 @@ To me the choice was easy: remod... no! New electronics and firmware. It's more 
 
 ## Status
 
-**Version 1.2.0 (2026-10-15):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
+**Version 1.3.0 (2026-10-20):** feature-complete on the bench, not yet installed in the oven. Next: take the oven apart for an inventory, then plan the installation (a power supply is already chosen). The panel buttons, encoder, pot, relays, door switch and display are verified. The magnetron relay is a stand-in on the bench. Firmware updates over Wi-Fi are verified. See [PLAN.md](PLAN.md#phases) for the phases.
 
 ## What it does
 
-- **Cooking:** set the time with the encoder (push = start; it speeds up when turned fast) and the power with the knob in the original oven's steps: 750, 700, 600, 500, 450, 350, 250, 150, 80 W, or 0 W = kitchen timer. Turning the knob shows the watts in large digits for a moment. Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
+- **Cooking:** set the time with the encoder (it speeds up when turned fast; Quick start starts, the encoder push never does) and the power with the knob in the original oven's steps: 750, 700, 600, 500, 450, 350, 250, 150, 80 W, or 0 W = kitchen timer. Turning the knob shows the watts in large digits for a moment. Stop pauses, then clears. Quick start adds 30 s. Rotate switches the turntable.
 - **Safety in software as well:** the magnetron only runs with the door closed and the fan running. All relays are off at power-up, on reset and when the door opens. A watchdog restarts the controller, with everything off, if the software hangs. The fan keeps cooling for 5 minutes after heavy use.
 - **Display:** a 5-second start-up splash with the AEG logo, the oven model and the firmware version; then a large clock when idle, and the remaining time while cooking. It dims after a while to a sleep screen with the red AEG logo and the clock, and the panel LEDs turn off with it.
 - **Menu** (Program button, or tap):

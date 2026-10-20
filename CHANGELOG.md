@@ -10,6 +10,14 @@ Sections per version: **Added** (new features), **Changed** (behaviour that work
 
 Nothing yet.
 
+## [1.3.0] – 2026-10-20
+
+Fingerprint `c20d309a`. Pull request #5.
+
+### Changed
+- The encoder is the one for the oven: it gives two pulses per click, so the controller now counts four steps per click (the bench encoder gave two). The bench encoder remains selectable in the code.
+- Pushing the encoder never starts the oven or resumes a pause: on the main screen it gives the "not allowed" beep. Only Quick start starts the oven. The push still confirms choices in the menus and editors (programs, defrost weight, clock, settings).
+
 ## [1.2.0] – 2026-10-15
 
 Fingerprint `e17d693a`. Pull request #4.
