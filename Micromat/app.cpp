@@ -788,7 +788,7 @@ void App::onInput(InputEvent e, int32_t value) {
 void App::mainInput(InputEvent e, int32_t value) {
   switch (e) {
     case InputEvent::EncoderTurn: adjustTime(value, millis()); break;
-    case InputEvent::EncoderPush: oven_->start(); break;
+    case InputEvent::EncoderPush: buzzer_->error(); break;  // never starts: only Quick start does
     case InputEvent::Stop:        oven_->stop(); break;
     case InputEvent::QuickStart:  oven_->quickStart(); break;
     case InputEvent::Rotate:      oven_->toggleRotate(); break;
