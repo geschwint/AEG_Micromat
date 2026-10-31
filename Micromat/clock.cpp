@@ -27,14 +27,20 @@ static bool rtcWrite(uint8_t reg, const uint8_t *buf, uint8_t len) {
   return Wire.endTransmission() == 0;
 }
 
-// UTC struct tm -> epoch, without disturbing the local TZ setting.
-static time_t utcToEpoch(struct tm t) {
-  setenv("TZ", "UTC0", 1);
-  tzset();
-  time_t e = mktime(&t);
-  setenv("TZ", LOCAL_TZ, 1);
-  tzset();
-  return e;
+// UTC struct tm -> epoch (days from the civil date, as timegm()). Out-of-range
+// days roll over, e.g. Feb 31 = Mar 3. Not via setenv("TZ") + mktime(): newlib's
+// setenv leaks the old string when the value grows, and this ran 4 times a
+// second, so memory ran out after ~12 h (2026-10: watchdog resets while idle).
+static time_t utcToEpoch(const struct tm &t) {
+  int y = t.tm_year + 1900;
+  int m = t.tm_mon + 1;  // 1..12
+  y -= m <= 2;
+  int era = (y >= 0 ? y : y - 399) / 400;
+  int yoe = y - era * 400;
+  int doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + t.tm_mday - 1;
+  int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+  int64_t days = (int64_t)era * 146097 + doe - 719468;
+  return (time_t)(days * 86400 + t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec);
 }
 
 void Clock::begin() {
@@ -59,6 +65,10 @@ void Clock::update(uint32_t now) {
   utc.tm_mday = bcd2bin(r[3] & 0x3F);
   utc.tm_mon = bcd2bin(r[5] & 0x1F) - 1;
   utc.tm_year = bcd2bin(r[6]) + 100;
+  if (utc.tm_mon < 0 || utc.tm_mon > 11) {  // garbage from the RTC
+    valid_ = false;
+    return;
+  }
   time_t epoch = utcToEpoch(utc);
   localtime_r(&epoch, &local_);
   valid_ = !(r[0] & 0x80);

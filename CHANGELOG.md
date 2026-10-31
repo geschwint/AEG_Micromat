@@ -10,6 +10,16 @@ Sections per version: **Added** (new features), **Changed** (behaviour that work
 
 Nothing yet.
 
+## [1.3.1] – 2026-10-31
+
+Fingerprint `a1a3566e`. Pull request #6.
+
+### Fixed
+- The controller ran out of memory after about 12 hours switched on, then hung and restarted by itself (logged as "task watchdog", even with the oven idle overnight). Reading the clock four times a second lost about 30 bytes each time. The time is now worked out without that.
+
+### Added
+- The debug log records the free memory once an hour, so a slow leak shows up.
+
 ## [1.3.0] – 2026-10-20
 
 Fingerprint `c20d309a`. Pull request #5.
