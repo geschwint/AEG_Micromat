@@ -124,6 +124,7 @@ constexpr uint32_t EGG_HOLD_MAX_MS  = 14000;
 
 // --- Debug log on the SD card (debug_log.h) -----------------------------------
 constexpr uint32_t LOG_FLUSH_MS    = 5000;             // buffered text goes to the card this often
+constexpr uint32_t MEM_LOG_MS      = 3600000;          // free memory logged every hour (leak check)
 constexpr size_t   LOG_BUF_BYTES   = 32768;            // RAM buffer (PSRAM)
 constexpr size_t   LOG_CHUNK_BYTES = 4096;             // at most this much per loop() pass
 constexpr size_t   LOG_FILE_MAX    = 1024UL * 1024;    // then the file rolls over (two are kept)

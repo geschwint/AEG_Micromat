@@ -28,6 +28,7 @@
 #include "console.h"
 #include "perf.h"
 #include "touch_cst816.h"
+#include <esp_heap_caps.h>
 
 // FSPI: the SD card (debug_log.cpp) shares this bus and must use the same SPI peripheral.
 Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_MISO, FSPI);
@@ -124,6 +125,14 @@ void loop() {
   firmwareUpdate.update(now);          // firmware update page / OTA, while that screen is open
   firmwareUpdate.confirmIfHealthy(now);  // a new firmware confirms itself after 30 s
   Log.update(now);                     // debug log: buffered text to the SD card every few seconds
+  static uint32_t lastMemLog = 0;      // free memory in the log now and then, so a leak shows up
+  if (now - lastMemLog >= MEM_LOG_MS) {
+    lastMemLog = now;
+    Log.printf("[%7lu] mem: internal %u free, largest %u, min ever %u | PSRAM %u free, largest %u\n", now,
+               (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+               (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+               (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+  }
   wifiTime.update(now);                // clock over Wi-Fi (NTP), when enabled
   consoleUpdate(oven, door, rtcClock, outputs, inputs, wifiTime);
   uiUpdate();
