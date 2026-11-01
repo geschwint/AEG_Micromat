@@ -102,7 +102,8 @@ constexpr uint32_t FAN_LEAD_MS     = 1000;    // fan must run this long before t
 constexpr uint32_t FAN_RUNON_MS         = 300000;  // fan keeps cooling this long
 constexpr uint16_t FAN_RUNON_WINDOW_S   = 240;
 constexpr uint16_t FAN_RUNON_MIN_HEAT_S = 180;
-constexpr uint32_t LAMP_DOOR_MS    = 300000;  // lamp turns off if the door is left open this long
+constexpr uint32_t DOOR_SLEEP_MS   = 120000;  // door open this long without use: sleep, lamp off
+constexpr uint32_t IDLE_CLEAR_MS   = 30000;   // door closed this long without use: a set or paused time is cleared
 constexpr uint32_t DOOR_DEBOUNCE_MS = 30;
 
 // --- User interface -------------------------------------------------------------

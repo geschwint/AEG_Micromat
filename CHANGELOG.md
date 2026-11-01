@@ -10,6 +10,14 @@ Sections per version: **Added** (new features), **Changed** (behaviour that work
 
 Nothing yet.
 
+## [1.4.0] – 2026-11-01
+
+Fingerprint `49063ac8`. Pull request #<n>.
+
+### Changed
+- A time left on the display is cleared after 30 seconds without use with the door closed: a time set but not started, and a paused cook. Before, it stayed (also through sleep), so Quick start could start with an old time left over (30 s left + Quick start = 1 minute).
+- A door left open for 2 minutes without use puts the oven to sleep, whatever it was doing and whatever the "Dim after" setting, and switches the oven lamp off. Closing the door or pressing anything wakes it; woken with the door still open, the lamp comes on again. This replaces the 5-minute lamp timeout.
+
 ## [1.3.1] – 2026-10-31
 
 Fingerprint `a1a3566e`. Pull request #6.

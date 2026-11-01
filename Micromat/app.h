@@ -138,6 +138,7 @@ private:
   float encSpeed_ = 0;            // clicks per second, smoothed
 
   bool dimmed_ = false;
+  bool doorSleep_ = false;  // asleep because the door was left open (lamp off too)
   bool splash_ = true;
   uint32_t splashStart_ = 0;
   uint32_t lastUse_ = 0;  // last user activity (menu timeout)

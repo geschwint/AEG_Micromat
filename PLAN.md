@@ -90,6 +90,8 @@ Notes:
 ### Dimming
 - "Use" = any input: encoder, encoder push, panel button, pot, touch, **door opened or closed**. Any use wakes the display.
 - *Proposed:* no dimming while Cooking or Paused; the 2 min count starts in Idle/Done.
+- **Door left open** (decided 2026-11-01): 2 min without use → sleep in any state and on any screen (except Wi-Fi setup and firmware update), whatever the dim setting, **with the oven lamp off**. Closing the door or any use wakes it; woken with the door still open, the lamp comes on again.
+- **Unused time is cleared** (decided 2026-11-01): with the door closed and 30 s without use, a time set but not started, or a paused cook, goes back to 0 s. So Quick start never starts with an old time left over (e.g. 30 s left + Quick start = 1 min).
 - *Proposed:* when dimmed, a turn/push of the encoder or a touch **only wakes** the display; Stop/Quick start/Rotate/Program act immediately (as well as waking it).
 
 ### Proposed details (to confirm)
