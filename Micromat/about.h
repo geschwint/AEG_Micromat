@@ -9,8 +9,8 @@
 // date from __DATE__ isn't used: with arduino-cli's build cache it only changes
 // when that one file is recompiled. The build fingerprint identifies every
 // build exactly; see FirmwareUpdate::version().)
-constexpr const char *FIRMWARE_VERSION = "1.3.1";
-constexpr const char *FIRMWARE_DATE = "2026-10-31";
+constexpr const char *FIRMWARE_VERSION = "1.4.0";
+constexpr const char *FIRMWARE_DATE = "2026-11-01";
 
 // Oven rating plate, inside the door frame (photo: AboutTheMicro.jpg).
 constexpr const char *OVEN_MAKER = "AEG";

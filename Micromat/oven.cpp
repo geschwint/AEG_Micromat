@@ -75,7 +75,7 @@ void Oven::update(uint32_t now, bool doorClosed) {
     Log.printf("[%7lu] fan run-on finished\n", now);
   }
 
-  bool doorLamp = !doorClosed_ && (now - doorOpenedAt_ < LAMP_DOOR_MS);
+  bool doorLamp = !doorClosed_ && !lampSleep_;
   out_->request(OUT_MAGNETRON, magnetronWanted(now));
   out_->request(OUT_FAN, heating || runOn_);
   out_->request(OUT_TURNTABLE, heating && rotate_);
@@ -181,13 +181,18 @@ void Oven::toggleRotate() {
   buzzer_->click();
 }
 
-// `now` must be the same timestamp the following update() gets, so the lamp
-// timeout (now - doorOpenedAt_) never goes negative.
+void Oven::clearUnused() {
+  if (state_ != OvenState::Paused && !(state_ == OvenState::Idle && remainingMs_ > 0)) return;
+  Log.printf("[%7lu] unused %s time cleared (%lu s)\n", millis(), state_ == OvenState::Paused ? "paused" : "set",
+             (unsigned long)remainingSeconds());
+  remainingMs_ = 0;
+  setState(OvenState::Idle);
+}
+
 void Oven::doorChanged(bool closed, uint32_t now) {
   doorClosed_ = closed;
   Log.printf("[%7lu] door %s\n", now, closed ? "closed" : "OPEN");
   if (!closed) {
-    doorOpenedAt_ = now;
     if (state_ == OvenState::Cooking) setState(OvenState::Paused);
     else if (state_ == OvenState::Done) {
       remainingMs_ = 0;

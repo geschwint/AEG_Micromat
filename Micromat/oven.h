@@ -35,6 +35,8 @@ public:
   void toggleRotate();
   void setRotate(bool on);
   void doorChanged(bool closed, uint32_t now);
+  void clearUnused();             // a set or paused time left unused: back to Idle, 0 s (no click)
+  void setLampSleep(bool off) { lampSleep_ = off; }  // door left open: the lamp sleeps with the display
 
   // View
   OvenState state() const { return state_; }
@@ -68,5 +70,5 @@ private:
   uint8_t heatHist_[(FAN_RUNON_WINDOW_S + 7) / 8] = {};  // 1 bit per second: heating, ring buffer
   uint16_t heatCount_ = 0;     // bits set in heatHist_
   uint32_t heatSec_ = 0;       // last second recorded (millis / 1000)
-  uint32_t doorOpenedAt_ = 0;  // lamp timeout reference
+  bool lampSleep_ = false;     // lamp off although the door is open (App: door left open)
 };

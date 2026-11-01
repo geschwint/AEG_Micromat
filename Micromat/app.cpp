@@ -360,6 +360,10 @@ void App::use() {
   dimRef_ = lastUse_;
   if (dimmed_) Log.printf("[%7lu] display awake\n", lastUse_);
   dimmed_ = false;
+  if (doorSleep_) {  // woken with the door still open: the lamp comes on again
+    doorSleep_ = false;
+    oven_->setLampSleep(false);
+  }
 }
 
 void App::showToast(Str s, uint32_t ms) {
@@ -955,6 +959,24 @@ void App::update(uint32_t now) {
   if (screen_ == Screen::Update && !firmwareUpdate.active() && t - lastUse_ > MENU_TIMEOUT_MS) {
     leaveUpdate();
     closeMenu();
+  }
+
+  // Door closed and unused for IDLE_CLEAR_MS: a time set but not started, or a
+  // paused cook, is cleared, so Quick start always starts from nothing.
+  if (door_->closed() && t - lastUse_ >= IDLE_CLEAR_MS) oven_->clearUnused();
+
+  // Door left open and unused for DOOR_SLEEP_MS: sleep with the lamp off, in
+  // any state and whatever the dim setting (not during Wi-Fi setup or a
+  // firmware update, which have their own timeouts). Any use wakes it (use()).
+  if (!door_->closed() && !doorSleep_ && t - lastUse_ >= DOOR_SLEEP_MS && screen_ != Screen::WifiSetup &&
+      screen_ != Screen::Update) {
+    closeMenu();
+    screen_ = Screen::Main;
+    doorSleep_ = true;
+    oven_->setLampSleep(true);
+    if (!dimmed_) Log.printf("[%7lu] display dimmed\n", t);
+    dimmed_ = true;
+    Log.printf("[%7lu] door left open: asleep, lamp off\n", t);
   }
 
   // Dim only on the main screen in Idle/Done; otherwise keep restarting the countdown.
