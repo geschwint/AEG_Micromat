@@ -12,7 +12,7 @@ Nothing yet.
 
 ## [1.4.0] – 2026-11-01
 
-Fingerprint `49063ac8`. Pull request #<n>.
+Fingerprint `49063ac8`. Pull request #7.
 
 ### Changed
 - A time left on the display is cleared after 30 seconds without use with the door closed: a time set but not started, and a paused cook. Before, it stayed (also through sleep), so Quick start could start with an old time left over (30 s left + Quick start = 1 minute).
